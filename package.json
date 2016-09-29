@@ -1,0 +1,58 @@
+{
+  "name": "apppot-sdk",
+  "version": "2.3.3",
+  "description": "",
+  "main": "dist/apppot.js",
+  "scripts": {
+    "build": "gulp",
+    "test": "karma start --browsers PhantomJS_debug --no-single-run",
+    "test:ie10": "karma start --browsers 'IE10 - Win7'",
+    "test:ie11": "karma start --browsers 'IE11 - Win7'",
+    "test:edge": "karma start --browsers 'MSEdge - Win10'",
+    "test:chrome": "karma start --browsers Chrome",
+    "test:saferi": "karma start --browsers Safari",
+    "test:firefox": "karma start --browsers Firefox",
+    "test:phantom": "karma start --browsers PhantomJS",
+    "test:all": "karma start --browsers 'IE10 - Win7'; karma start --browsers 'IE11 - Win7'; karma start --browsers 'MSEdge - Win10'; karma start --browsers Chrome; karma start --browsers Safari; karma start --browsers Firefox"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/NCDCHub/apppot-sdk-js"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NCDCHub/apppot-sdk-js/issues"
+  },
+  "homepage": "https://github.com/NCDCHub/apppot-sdk-js#readme",
+  "devDependencies": {
+    "del": "^2.2.2",
+    "es6-promise": "^3.2.1",
+    "expose-loader": "^0.7.1",
+    "gulp": "^3.9.1",
+    "gulp-connect": "^3.2.2",
+    "gulp-ejs": "^2.1.1",
+    "gulp-plumber": "^1.1.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-strip-debug": "^1.1.0",
+    "gulp-uglify": "^1.5.3",
+    "gulp-watch": "^4.3.5",
+    "jasmine-core": "^2.4.1",
+    "karma": "^0.13.22",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-ievms": "^0.1.0",
+    "karma-jasmine": "^1.0.2",
+    "karma-phantomjs-launcher": "^1.0.0",
+    "karma-safari-launcher": "^1.0.0",
+    "karma-spec-reporter": "0.0.26",
+    "moment": "^2.13.0",
+    "object-assign": "^4.1.0",
+    "superagent": "^1.8.3",
+    "ts-loader": "^0.8.2",
+    "typescript": "^1.8.10",
+    "typings": "^1.3.1",
+    "webpack": "^1.13.0",
+    "webpack-stream": "^3.1.0"
+  }
+}
