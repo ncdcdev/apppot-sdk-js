@@ -1,6 +1,6 @@
 {
   "name": "apppot-sdk",
-  "version": "2.3.3",
+  "version": "2.3.4",
   "description": "",
   "main": "dist/apppot.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "url": "git://github.com/NCDCHub/apppot-sdk-js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/NCDCHub/apppot-sdk-js/issues"
   },
