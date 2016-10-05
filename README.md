@@ -20,7 +20,7 @@ npm install apppot-sdk
 2. As follows, configure the connection destination and apps information like following.
 (`url`, `appId`, `appKey`, `appVersion`, `companyId` and `groupId` should be set a value corresponding to the environment.)
 
-  <script type="text/javascript">
+```javascript
   	var window.AppPot = AppPotSDK.getService({
   		url: 'http://example.com/apppot/',
   		appId: 'apppot-test-app',
@@ -29,11 +29,11 @@ npm install apppot-sdk
   		companyId: 1,
   		groupId: 1
   	});
-  </script>
+```
 
 3. Define models for your App.
 
-  <script type="text/javascript">
+```javascript
   	window.Models = {
   		Customer: AppPot.defineModel('Customer', {
   			'name': {
@@ -63,16 +63,16 @@ npm install apppot-sdk
   		}),
   		...
   	};
-  </script>
+```
 
 4. Create DataBase for your App.
 
-  <script type="text/javascript">
+```javascript
   	AppPot.createDatabase(Object.values(window.Models))
   		.then(()=>{
   			console.log('database is created!!');
   		});
-  </script>
+```
   
 ## Other API or usage
 You can find a documents at:  
