@@ -19,7 +19,9 @@ export function getUserClass(appPot:AppPot){
 
     set(columns){
       Object.keys(this._columns).forEach((key) => {
-        this._columns[key] = columns[key];
+        if(columns[key]){
+          this._columns[key] = columns[key];
+        }
       });
       let grs = columns.groupsRoles ||
         columns.groupsAndRoles ||
@@ -34,9 +36,13 @@ export function getUserClass(appPot:AppPot){
       this._columns.groupsRoles =
         grs.map((val) => {
           return new GroupsRoles({
-            groupId: val.groupId, roleName: val.roleName
+            groupId: val.groupId,
+            groupName: val.groupName,
+            roleName: val.roleName,
           });
         });
+
+      return this;
     }
 
     set account(value){
@@ -118,10 +124,9 @@ export function getUserClass(appPot:AppPot){
         const obj = this._getObjForUserAPI();
         appPot.getAjax().post('users', options)
           .send(obj)
-          .end(Ajax.end(resolve, reject, (obj) => {
-
-            resolve(new User(obj.user));
-          }));
+          .end(Ajax.end((obj) => {
+            resolve(this.set(obj.user));
+          }, reject));
       });
     }
 
@@ -149,6 +154,7 @@ export enum Role {
 export class GroupsRoles {
   private _groupId;
   private _role;
+  private _groupName;
   constructor(args){
     if(args.groupId){
       this._groupId = args.groupId;
@@ -158,6 +164,9 @@ export class GroupsRoles {
     }
     if(args.role){
       this._role = args.role;
+    }
+    if(args.groupName){
+      this._groupName = args.groupName;
     }
   }
 
@@ -169,6 +178,10 @@ export class GroupsRoles {
 
   get groupId(){
     return this._groupId;
+  }
+
+  get groupName(){
+    return this._groupName;
   }
 
   get role(){
