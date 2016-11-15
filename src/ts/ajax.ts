@@ -53,6 +53,10 @@ export class Ajax {
     return this.setToken(agent);
   }
 
+  update(url, options?: AjaxOptions){
+    return this.put(url, options);
+  }
+  
   put(url, options?: AjaxOptions){
     const opts = this.buildOpts(options);
     let agent = superagent

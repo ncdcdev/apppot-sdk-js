@@ -8,6 +8,7 @@ import {LocalAuthenticator} from './local-authenticator';
 import {Database} from './database';
 import {Model} from './model';
 import {getUserClass, GroupsRoles, Role} from './user';
+import {getGroupClass} from './group';
 import {DataType} from './types';
 import {Error} from './error';
 import {Promise} from 'es6-promise';
@@ -18,6 +19,7 @@ export class AppPot {
   private _ajax: Ajax;
   private _inst;
   public User;
+  public Group;
   public Model;
   public Role;
   public GroupsRoles;
@@ -45,6 +47,7 @@ export class AppPot {
     this['GroupsRoles'] = GroupsRoles;
     this['DataType'] = DataType;
     this['Error'] = Error;
+    this['Group'] = getGroupClass(this);
   }
   getAjax(){
     return this._ajax;
