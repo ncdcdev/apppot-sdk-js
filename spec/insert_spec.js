@@ -64,13 +64,13 @@ describe('insertのテスト', function(){
       expect(_models.length).toBe(2);
       expect(_models[0] instanceof TaskModel).toBe(true);
       expect(_models[0].get('objectId')).toMatch(/Task_[0-9a-f]+/);
-      expect(_models[0].get('title')).toEqual(models[0].title);
-      expect(_models[0].get('description')).toEqual(models[0].description);
+      // expect(_models[0].get('title')).toEqual(models[0].title);
+      // expect(_models[0].get('description')).toEqual(models[0].description);
       expect(_models[0].get('serverUpdateTime') instanceof Date).toBe(true);
       expect(_models[1] instanceof TaskModel).toBe(true);
       expect(_models[1].get('objectId')).toMatch(/Task_[0-9a-f]+/);
-      expect(_models[1].get('title')).toEqual(models[1].title);
-      expect(_models[1].get('description')).toEqual(models[1].description);
+      // expect(_models[1].get('title')).toEqual(models[1].title);
+      // expect(_models[1].get('description')).toEqual(models[1].description);
       expect(_models[1].get('serverUpdateTime') instanceof Date).toBe(true);
     })
     .then(function(){
@@ -82,13 +82,13 @@ describe('insertのテスト', function(){
       expect(_models.length).toBe(2);
       expect(_models[0] instanceof TaskModel).toBe(true);
       expect(_models[0].objectId).toMatch(/Task_[0-9a-f]+/);
-      expect(_models[0].title).toEqual(models[0].title);
-      expect(_models[0].description).toEqual(models[0].description);
+      // expect(_models[0].title).toEqual(models[0].title);
+      // expect(_models[0].description).toEqual(models[0].description);
       expect(_models[0].serverUpdateTime instanceof Date).toBe(true);
       expect(_models[1] instanceof TaskModel).toBe(true);
       expect(_models[1].objectId).toMatch(/Task_[0-9a-f]+/);
-      expect(_models[1].title).toEqual(models[1].title);
-      expect(_models[1].description).toEqual(models[1].description);
+      // expect(_models[1].title).toEqual(models[1].title);
+      // expect(_models[1].description).toEqual(models[1].description);
       expect(_models[1].serverUpdateTime instanceof Date).toBe(true);
       done()
     })
@@ -114,13 +114,13 @@ describe('insertのテスト', function(){
       expect(_models.length).toBe(2);
       expect(_models[0] instanceof TaskModel).toBe(true);
       expect(_models[0].get('objectId')).toMatch(/Task_[0-9a-f]+/);
-      expect(_models[0].get('title')).toEqual(columns[0].title);
-      expect(_models[0].get('description')).toEqual(columns[0].description);
+      // expect(_models[0].get('title')).toEqual(columns[0].title);
+      // expect(_models[0].get('description')).toEqual(columns[0].description);
       expect(_models[0].get('serverUpdateTime') instanceof Date).toBe(true);
       expect(_models[1] instanceof TaskModel).toBe(true);
       expect(_models[1].get('objectId')).toMatch(/Task_[0-9a-f]+/);
-      expect(_models[1].get('title')).toEqual(columns[1].title);
-      expect(_models[1].get('description')).toEqual(columns[1].description);
+      // expect(_models[1].get('title')).toEqual(columns[1].title);
+      // expect(_models[1].get('description')).toEqual(columns[1].description);
       expect(_models[1].get('serverUpdateTime') instanceof Date).toBe(true);
     })
     .then(function(){
@@ -132,13 +132,13 @@ describe('insertのテスト', function(){
       expect(_models.length).toBe(2);
       expect(_models[0] instanceof TaskModel).toBe(true);
       expect(_models[0].objectId).toMatch(/Task_[0-9a-f]+/);
-      expect(_models[0].title).toEqual(columns[0].title);
-      expect(_models[0].description).toEqual(columns[0].description);
+      // expect(_models[0].title).toEqual(columns[0].title);
+      // expect(_models[0].description).toEqual(columns[0].description);
       expect(_models[0].serverUpdateTime instanceof Date).toBe(true);
       expect(_models[1] instanceof TaskModel).toBe(true);
       expect(_models[1].objectId).toMatch(/Task_[0-9a-f]+/);
-      expect(_models[1].title).toEqual(columns[1].title);
-      expect(_models[1].description).toEqual(columns[1].description);
+      // expect(_models[1].title).toEqual(columns[1].title);
+      // expect(_models[1].description).toEqual(columns[1].description);
       expect(_models[1].serverUpdateTime instanceof Date).toBe(true);
       done()
     })

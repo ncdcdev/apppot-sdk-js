@@ -19,7 +19,7 @@ gulp.task('clean-js', function(){
   ]);
 });
 
-gulp.task('sdk', ['clean-js'], function(){
+gulp.task('sdk', function(){
   return gulp.src([
       './src/ts/**/*.ts',
     ])

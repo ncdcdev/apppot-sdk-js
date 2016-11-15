@@ -37,16 +37,4 @@ let webpackConfig = {
   }
 };
 
-if(env == 'production'){
-  webpackConfig['plugins'].push(
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false
-      }
-    })
-  );
-}else{
-  webpackConfig['devtool'] = "#source-map";
-}
-
 module.exports = webpackConfig;
