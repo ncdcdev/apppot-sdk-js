@@ -1,13 +1,15 @@
 # AppPot SDK for JavaScript
 
-[![NPM](https://nodei.co/npm/apppot-sdk.svg?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/apppot-sdk/)
+[![NPM](https://nodei.co/npm/apppot-sdk.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/apppot-sdk/)
+
 [![npm version](https://badge.fury.io/js/apppot-sdk.svg)](https://badge.fury.io/js/apppot-sdk)
 
 AppPot SDK for JavaScript, available for browsers and smart devices, or Node.js.
 
 ## How to Use
 
-1. To use the SDK in the browser, add the following script tag to your HTML page
+### install
+To use the SDK in the browser, add the following script tag to your HTML page
 
 ```html
 <script src="https://raw.githubusercontent.com/NCDCHub/apppot-sdk-js/master/dist/apppot.js"></script>
@@ -19,7 +21,8 @@ To use in the Node.js, use the [npm](http://npmjs.org) package manager. Type the
 npm install apppot-sdk
 ```
 
-2. As follows, configure the connection destination and apps information like following.
+### configure
+As follows, configure the connection destination and apps information like following.
 (`url`, `appId`, `appKey`, `appVersion`, `companyId` and `groupId` should be set a value corresponding to the environment.)
 
 ```javascript
@@ -33,7 +36,8 @@ var window.AppPot = AppPotSDK.getService({
 });
 ```
 
-3. Define models for your App.
+### define models
+Define models for your App.
 
 ```javascript
 window.Models = {
@@ -67,7 +71,8 @@ window.Models = {
 };
 ```
 
-4. Create DataBase for your App.
+### create database
+Create DataBase for your App.
 
 ```javascript
 AppPot.createDatabase(Object.values(window.Models))
