@@ -113,10 +113,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1479207125) || "unknown";
+	        return (1479372743) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","5"]).join('.') || "unknown";
+	        return (["2","3","7"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -278,7 +278,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var obj = JSON.parse(str);
 	        if (obj) {
 	            this.setToken(obj['token']);
-	            this.setUser(obj['user']);
+	            var user = new (this.apppot.User)(obj['user']['_columns']);
+	            this.setUser(user);
 	            return true;
 	        }
 	        return false;
