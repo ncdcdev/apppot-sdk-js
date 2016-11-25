@@ -113,7 +113,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1479372743) || "unknown";
+	        return (1480044073) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
 	        return (["2","3","7"]).join('.') || "unknown";
@@ -18585,11 +18585,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            this._columns.groupsRoles =
 	                grs.map(function (val) {
-	                    return new GroupsRoles({
-	                        groupId: val.groupId,
-	                        groupName: val.groupName,
-	                        roleName: val.roleName,
-	                    });
+	                    return new GroupsRoles(val);
 	                });
 	            return this;
 	        };
@@ -18712,14 +18708,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Role = exports.Role;
 	var GroupsRoles = (function () {
 	    function GroupsRoles(args) {
+	        if (args.group && args.role) {
+	            this._groupId = args.group.groupId;
+	            this._roleId = Role[args.role.roleName];
+	            this._groupName = args.group.groupName;
+	        }
 	        if (args.groupId) {
 	            this._groupId = args.groupId;
 	        }
-	        if (args.roleName) {
-	            this._role = Role[args.roleName];
+	        if (args.roleName && !this._roleId) {
+	            this._roleId = Role[args.roleName];
 	        }
-	        if (args.role) {
-	            this._role = args.role;
+	        if (args.role && !this._roleId) {
+	            this._roleId = args.role;
 	        }
 	        if (args.groupName) {
 	            this._groupName = args.groupName;
@@ -18727,7 +18728,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    GroupsRoles.prototype.setGroupsRoles = function (obj) {
 	        this._groupId = obj.group.groupId;
-	        this._role = Role[obj.role.roleName];
+	        this._roleId = Role[obj.role.roleName];
 	        return this;
 	    };
 	    Object.defineProperty(GroupsRoles.prototype, "groupId", {
@@ -18746,18 +18747,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    });
 	    Object.defineProperty(GroupsRoles.prototype, "role", {
 	        get: function () {
-	            return this._role;
+	            return this._roleId;
 	        },
 	        enumerable: true,
 	        configurable: true
 	    });
 	    Object.defineProperty(GroupsRoles.prototype, "roleName", {
 	        get: function () {
-	            switch (this._role) {
+	            switch (this._roleId) {
 	                case Role.SuperAdmin:
 	                    return "Super Admin";
 	                default:
-	                    return Role[this._role];
+	                    return Role[this._roleId];
 	            }
 	        },
 	        enumerable: true,
@@ -18766,7 +18767,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    GroupsRoles.prototype.getGroupsRolesForUserAPI = function () {
 	        return {
 	            group: {
-	                groupId: this._groupId
+	                groupId: this.groupId
 	            },
 	            role: {
 	                roleName: this.roleName

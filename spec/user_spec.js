@@ -37,7 +37,12 @@ describe('User管理APIのテスト', function(){
       })
     });
 
-    user.create().then(function(){
+    user.create().then(function(user){
+      expect(user instanceof AppPot.User).toBeTruthy();
+      expect(user.groupsRoles instanceof Array).toBeTruthy();
+      expect(user.groupsRoles[0] instanceof AppPot.GroupsRoles).toBeTruthy();
+      expect(user.groupsRoles[0].groupId).toEqual(gr.groupId);
+      expect(user.groupsRoles[0].groupName).toEqual(gr.groupName);
       return AppPot.LocalAuthenticator.logout();
     }).then(function(){
       return AppPot.LocalAuthenticator.login(
@@ -52,8 +57,14 @@ describe('User管理APIのテスト', function(){
     var groupId = AppPot.getUser().groupsRoles[0].groupId;
     AppPot.User.list(groupId)
       .then(function(users){
+        console.log(users[0].groupsRoles[0]);
         expect(users instanceof Array).toBeTruthy();
         expect(users[0] instanceof AppPot.User).toBeTruthy();
+        expect(users[0].groupsRoles instanceof Array).toBeTruthy();
+        expect(users[0].groupsRoles[0] instanceof AppPot.GroupsRoles).toBeTruthy();
+        expect(users[0].groupsRoles[0].groupId).toEqual(groupId);
+        expect(users[0].groupsRoles[0].groupName).toEqual('group001');
+        expect(users[0].groupsRoles[0].roleName).toEqual('User');
         done();
       });
   });
