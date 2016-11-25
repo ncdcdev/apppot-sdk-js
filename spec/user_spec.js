@@ -1,5 +1,6 @@
 describe('User管理APIのテスト', function(){
   beforeEach(function(done){
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 30000;
     AppPot.LocalAuthenticator.login(account.username, account.password)
       .then(function(){
         done();
@@ -65,7 +66,6 @@ describe('User管理APIのテスト', function(){
         expect(users[0].groupsRoles[0] instanceof AppPot.GroupsRoles).toBeTruthy();
         expect(users[0].groupsRoles[0].groupId).toEqual(groupId);
         expect(users[0].groupsRoles[0].groupName).toEqual('group001');
-        expect(users[0].groupsRoles[0].roleName).toEqual('User');
         done();
       });
   });
@@ -104,6 +104,28 @@ describe('User管理APIのテスト', function(){
         }
       }).catch(function(){
         throw 'failed';
+      });
+  });
+
+  it('ユーザーを削除できる', function(done){
+    var groupId = AppPot.getUser().groupsRoles[0].groupId;
+    AppPot.User.list(groupId)
+      .then(function(users){
+        expect(users instanceof Array).toBeTruthy();
+        var delUsers = users.filter(function(user){
+          return user.account != 'user001';
+        });
+        return Promise.all(
+          delUsers.map(function(user){
+            return user.remove({timeout:30000});
+          })
+        );
+      }).then(function(){
+        return AppPot.User.list(groupId)
+      }).then(function(users){
+        expect(users instanceof Array).toBeTruthy();
+        expect(users.length).toEqual(1);
+        done();
       });
   });
 });
