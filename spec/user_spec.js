@@ -1,5 +1,7 @@
 describe('User管理APIのテスト', function(){
+  var originalTimeout;
   beforeEach(function(done){
+    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 30000;
     AppPot.LocalAuthenticator.login(account.username, account.password)
       .then(function(){
@@ -7,11 +9,8 @@ describe('User管理APIのテスト', function(){
       });
   });
 
-  afterEach(function(done){
-    AppPot.LocalAuthenticator.login(account.username, account.password)
-      .then(function(){
-        done();
-      });
+  afterEach(function(){
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
   });
 
   function randomString(len){

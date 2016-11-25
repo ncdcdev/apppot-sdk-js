@@ -10,6 +10,7 @@ export function getGroupClass(appPot:AppPot){
       this._columns = {
         groupId: null,
         groupName: "",
+        isAddCurrentApp: false,
         description: ""
       };
       this.set(columns);

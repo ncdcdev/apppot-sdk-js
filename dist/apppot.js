@@ -18807,6 +18807,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this._columns = {
 	                groupId: null,
 	                groupName: "",
+	                isAddCurrentApp: false,
 	                description: ""
 	            };
 	            this.set(columns);
