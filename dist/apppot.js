@@ -113,10 +113,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1480044073) || "unknown";
+	        return (1480059834) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","7"]).join('.') || "unknown";
+	        return (["2","3","8"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
