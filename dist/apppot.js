@@ -18576,7 +18576,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            });
 	            var grs = columns.groupsRoles ||
 	                columns.groupsAndRoles ||
-	                columns.groupRoleMap;
+	                columns.groupRoleMap ||
+	                this.groupsRoles;
 	            if (grs instanceof GroupsRoles) {
 	                grs = [grs];
 	            }
@@ -18679,6 +18680,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return new es6_promise_1.Promise(function (resolve, reject) {
 	                var obj = _this._getObjForUserAPI();
 	                appPot.getAjax().post('users', options)
+	                    .send(obj)
+	                    .end(ajax_1.Ajax.end(function (obj) {
+	                    resolve(_this.set(obj.user));
+	                }, reject));
+	            });
+	        };
+	        User.prototype.update = function (columns, options) {
+	            var _this = this;
+	            if (columns) {
+	                this.set(columns);
+	            }
+	            return new es6_promise_1.Promise(function (resolve, reject) {
+	                var obj = _this._getObjForUserAPI();
+	                appPot.getAjax().put("users/" + _this.userId, options)
 	                    .send(obj)
 	                    .end(ajax_1.Ajax.end(function (obj) {
 	                    resolve(_this.set(obj.user));

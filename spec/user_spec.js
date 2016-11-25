@@ -23,10 +23,12 @@ describe('User管理APIのテスト', function(){
     return r;
   }
 
-  it('ユーザーを作成できる', function(done){
+  var targetUser = null;
 
+  it('ユーザーを作成できる', function(done){
     var gr = AppPot.getUser().groupsRoles[0];
-    var user = new AppPot.User({
+
+    targetUser = new AppPot.User({
       account: randomString(16),
       firstName: 'test',
       lastName: 'account',
@@ -37,7 +39,7 @@ describe('User管理APIのテスト', function(){
       })
     });
 
-    user.create().then(function(user){
+    targetUser.create().then(function(user){
       expect(user instanceof AppPot.User).toBeTruthy();
       expect(user.groupsRoles instanceof Array).toBeTruthy();
       expect(user.groupsRoles[0] instanceof AppPot.GroupsRoles).toBeTruthy();
@@ -46,7 +48,7 @@ describe('User管理APIのテスト', function(){
       return AppPot.LocalAuthenticator.logout();
     }).then(function(){
       return AppPot.LocalAuthenticator.login(
-        user.account, user.password
+        targetUser.account, targetUser.password
       );
     }).then(function(){
       done();
@@ -57,7 +59,6 @@ describe('User管理APIのテスト', function(){
     var groupId = AppPot.getUser().groupsRoles[0].groupId;
     AppPot.User.list(groupId)
       .then(function(users){
-        console.log(users[0].groupsRoles[0]);
         expect(users instanceof Array).toBeTruthy();
         expect(users[0] instanceof AppPot.User).toBeTruthy();
         expect(users[0].groupsRoles instanceof Array).toBeTruthy();
@@ -66,6 +67,43 @@ describe('User管理APIのテスト', function(){
         expect(users[0].groupsRoles[0].groupName).toEqual('group001');
         expect(users[0].groupsRoles[0].roleName).toEqual('User');
         done();
+      });
+  });
+
+  it('ユーザー情報を更新できる', function(done){
+    var updatedFirstName = randomString(16);
+    var groupId = AppPot.getUser().groupsRoles[0].groupId;
+    AppPot.LocalAuthenticator.logout()
+      .then(function(){
+        return AppPot.LocalAuthenticator.login(
+          targetUser.account, targetUser.password
+        );
+      }).then(function(){
+        expect(targetUser instanceof AppPot.User).toBeTruthy();
+        return targetUser.update({firstName: updatedFirstName});
+      }).then(function(){
+        return AppPot.LocalAuthenticator.logout()
+      }).then(function(){
+        return AppPot.LocalAuthenticator.login(account.username, account.password)
+      }).then(function(){
+        return AppPot.User.list(groupId)
+      }).then(function(users){
+        var len = users.length;
+        for(var i = 0; i < len; i++){
+          if(users[i].userId == targetUser.userId){
+            expect(users[i].firstName).toEqual(updatedFirstName);
+            return true;
+          }
+        }
+        return false
+      }).then(function(result){
+        if(result){
+          done();
+        }else{
+          throw 'failed';
+        }
+      }).catch(function(){
+        throw 'failed';
       });
   });
 });

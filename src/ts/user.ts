@@ -25,7 +25,8 @@ export function getUserClass(appPot:AppPot){
       });
       let grs = columns.groupsRoles ||
         columns.groupsAndRoles ||
-        columns.groupRoleMap;
+        columns.groupRoleMap ||
+        this.groupsRoles;
 
       if(grs instanceof GroupsRoles){
         grs = [grs];
@@ -119,6 +120,20 @@ export function getUserClass(appPot:AppPot){
       return new Promise((resolve, reject) => {
         const obj = this._getObjForUserAPI();
         appPot.getAjax().post('users', options)
+          .send(obj)
+          .end(Ajax.end((obj) => {
+            resolve(this.set(obj.user));
+          }, reject));
+      });
+    }
+
+    update(columns?, options?: AjaxOptions){
+      if(columns){
+        this.set(columns);
+      }
+      return new Promise((resolve, reject) => {
+        const obj = this._getObjForUserAPI();
+        appPot.getAjax().put(`users/${this.userId}`, options)
           .send(obj)
           .end(Ajax.end((obj) => {
             resolve(this.set(obj.user));
