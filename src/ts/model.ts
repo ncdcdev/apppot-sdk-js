@@ -47,6 +47,11 @@ export namespace Model {
     All = 3
   }
 
+  export enum JoinType {
+    LeftInner = 1,
+    LeftOuter = 2
+  }
+
   export enum Order {
     asc,
     desc
@@ -442,12 +447,25 @@ export namespace Model {
     }
 
     join(modelClass, ...args){
+      let joinType:number;
+      if(typeof args[0] == 'number'){
+        joinType = args.shift();
+      }
+      let joinStr = 'LEFT JOIN';
+      switch(joinType){
+        case JoinType.LeftOuter:
+          joinStr = 'LEFT OUTER';
+          break;
+        case JoinType.LeftInner:
+          joinStr = 'LEFT JOIN';
+          break;
+      }
       const exp = this.normalizeExpression(args);
       if(!this._queryObj['join']){
         this._queryObj['join'] = [];
       }
       this._queryObj['join'].push({
-        type: 'LEFT JOIN',
+        type: joinStr,
         entity: modelClass.className,
         entityAlias: modelClass.className,
         expression: exp.getQuery()
