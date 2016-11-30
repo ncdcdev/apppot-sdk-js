@@ -4161,9 +4161,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    .end(ajax_1.Ajax.end(resolve, function (err) {
 	                    if (err.response.statusCode == 404) {
 	                        var models_1 = [_this._className];
-	                        _this._queryObj.join.forEach(function (joinObj) {
-	                            models_1.push(joinObj.entity);
-	                        });
+	                        if (_this._queryObj.join instanceof Array) {
+	                            _this._queryObj.join.forEach(function (joinObj) {
+	                                models_1.push(joinObj.entity);
+	                            });
+	                        }
 	                        var emptyArrays_1 = {};
 	                        models_1.forEach(function (name) {
 	                            emptyArrays_1[name] = [];

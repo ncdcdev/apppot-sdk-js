@@ -553,9 +553,11 @@ export namespace Model {
             .end(Ajax.end(resolve, (err)=>{
               if(err.response.statusCode == 404){
                 let models = [this._className];
-                this._queryObj.join.forEach((joinObj)=>{
-                  models.push(joinObj.entity);
-                });
+                if(this._queryObj.join instanceof Array){
+                  this._queryObj.join.forEach((joinObj)=>{
+                    models.push(joinObj.entity);
+                  });
+                }
                 let emptyArrays = {};
                 models.forEach((name)=>{
                   emptyArrays[name] = [];
