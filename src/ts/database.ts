@@ -78,6 +78,10 @@ export class Database {
       case 'datetime':
         column['type'] = 'long';
         break;
+      case 'double':
+        column['type'] = 'varchar';
+        column['fieldLength'] = 255;
+        break;
     }
     return column;
   }

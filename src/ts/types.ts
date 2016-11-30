@@ -3,5 +3,6 @@ export enum DataType {
   Integer,
   Long,
   Bool,
-  DateTime
+  DateTime,
+  Double
 }

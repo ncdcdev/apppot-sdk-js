@@ -265,6 +265,8 @@ export namespace Model {
           }else if(modelColumns[key]['type'] == DataType.DateTime &&
                    !(_columns[key] instanceof Date) ){
             _columns[key] = new Date(parseInt(columns[key]));
+          }else if(modelColumns[key]['type'] == DataType.Double){
+            _columns[key] = parseFloat(columns[key]);
           }
         });
         return _columns;
@@ -291,6 +293,11 @@ export namespace Model {
               throw new Error(-1, 'invalid type: column ' + _className + '"."' + key + '"');
             }
             _columns[key] = columns[key].getTime();
+          }else if(modelColumns[key]['type'] == DataType.Double){
+            if(typeof columns[key] != 'number'){
+              throw new Error(-1, 'invalid type: column ' + _className + '"."' + key + '"');
+            }
+            _columns[key] = columns[key] + "";
           }
         });
         if(isCreate){
