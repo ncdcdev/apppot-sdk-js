@@ -4170,6 +4170,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        models_1.forEach(function (name) {
 	                            emptyArrays_1[name] = [];
 	                        });
+	                        resolve(emptyArrays_1);
 	                    }
 	                    else {
 	                        reject(err);

@@ -562,6 +562,7 @@ export namespace Model {
                 models.forEach((name)=>{
                   emptyArrays[name] = [];
                 });
+                resolve(emptyArrays);
               }else{
                 reject(err);
               }
