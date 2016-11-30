@@ -113,7 +113,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1480059834) || "unknown";
+	        return (1480409303) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
 	        return (["2","3","8"]).join('.') || "unknown";
@@ -3531,6 +3531,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            case 'datetime':
 	                column['type'] = 'long';
 	                break;
+	            case 'double':
+	                column['type'] = 'varchar';
+	                column['fieldLength'] = 255;
+	                break;
 	        }
 	        return column;
 	    };
@@ -3585,6 +3589,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    DataType[DataType["Long"] = 2] = "Long";
 	    DataType[DataType["Bool"] = 3] = "Bool";
 	    DataType[DataType["DateTime"] = 4] = "DateTime";
+	    DataType[DataType["Double"] = 5] = "Double";
 	})(exports.DataType || (exports.DataType = {}));
 	var DataType = exports.DataType;
 
@@ -3643,6 +3648,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        ScopeType[ScopeType["All"] = 3] = "All";
 	    })(Model.ScopeType || (Model.ScopeType = {}));
 	    var ScopeType = Model.ScopeType;
+	    (function (JoinType) {
+	        JoinType[JoinType["LeftInner"] = 1] = "LeftInner";
+	        JoinType[JoinType["LeftOuter"] = 2] = "LeftOuter";
+	    })(Model.JoinType || (Model.JoinType = {}));
+	    var JoinType = Model.JoinType;
 	    (function (Order) {
 	        Order[Order["asc"] = 0] = "asc";
 	        Order[Order["desc"] = 1] = "desc";
@@ -3835,6 +3845,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        !(_columns[key] instanceof Date)) {
 	                        _columns[key] = new Date(parseInt(columns[key]));
 	                    }
+	                    else if (modelColumns[key]['type'] == types_1.DataType.Double) {
+	                        _columns[key] = parseFloat(columns[key]);
+	                    }
 	                });
 	                return _columns;
 	            };
@@ -3860,6 +3873,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            throw new error_1.Error(-1, 'invalid type: column ' + _className + '"."' + key + '"');
 	                        }
 	                        _columns[key] = columns[key].getTime();
+	                    }
+	                    else if (modelColumns[key]['type'] == types_1.DataType.Double) {
+	                        if (typeof columns[key] != 'number') {
+	                            throw new error_1.Error(-1, 'invalid type: column ' + _className + '"."' + key + '"');
+	                        }
+	                        _columns[key] = columns[key] + "";
 	                    }
 	                });
 	                if (isCreate) {
@@ -4038,12 +4057,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	            for (var _i = 1; _i < arguments.length; _i++) {
 	                args[_i - 1] = arguments[_i];
 	            }
+	            var joinType;
+	            if (typeof args[0] == 'number') {
+	                joinType = args.shift();
+	            }
+	            var joinStr = 'LEFT JOIN';
+	            switch (joinType) {
+	                case JoinType.LeftOuter:
+	                    joinStr = 'LEFT OUTER';
+	                    break;
+	                case JoinType.LeftInner:
+	                    joinStr = 'LEFT JOIN';
+	                    break;
+	            }
 	            var exp = this.normalizeExpression(args);
 	            if (!this._queryObj['join']) {
 	                this._queryObj['join'] = [];
 	            }
 	            this._queryObj['join'].push({
-	                type: 'LEFT JOIN',
+	                type: joinStr,
 	                entity: modelClass.className,
 	                entityAlias: modelClass.className,
 	                expression: exp.getQuery()
@@ -18650,11 +18682,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	            enumerable: true,
 	            configurable: true
 	        });
-	        User.list = function (groupId, options) {
+	        User._isNumber = function (x) {
+	            if (typeof (x) != 'number' && typeof (x) != 'string') {
+	                return false;
+	            }
+	            else {
+	                return (x == parseFloat(x) && isFinite(x));
+	            }
+	        };
+	        User.list = function (params, options) {
+	            var _params = {};
+	            if (this._isNumber(params)) {
+	                _params['groupId'] = params;
+	            }
 	            return new es6_promise_1.Promise(function (resolve, reject) {
 	                appPot.getAjax().get('users', options)
 	                    .query({ token: appPot.getAuthInfo().getToken() })
-	                    .query({ groupId: groupId })
+	                    .query(params)
 	                    .end(ajax_1.Ajax.end(function (res) {
 	                    var users = res['users'];
 	                    var userInsts = users.map(function (user) {
