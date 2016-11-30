@@ -4179,7 +4179,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                _this._ajax.post("data/" + _this._className)
 	                    .send(_this._queryObj)
 	                    .end(ajax_1.Ajax.end(resolve, function (err) {
-	                    if (err.response.statusCode == 404) {
+	                    if (err.response && err.response.statusCode == 404) {
 	                        var models_1 = [_this._className];
 	                        if (_this._queryObj.join instanceof Array) {
 	                            _this._queryObj.join.forEach(function (joinObj) {

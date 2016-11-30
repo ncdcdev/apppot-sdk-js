@@ -567,7 +567,7 @@ export namespace Model {
           this._ajax.post(`data/${this._className}`)
             .send(this._queryObj)
             .end(Ajax.end(resolve, (err)=>{
-              if(err.response.statusCode == 404){
+              if(err.response && err.response.statusCode == 404){
                 let models = [this._className];
                 if(this._queryObj.join instanceof Array){
                   this._queryObj.join.forEach((joinObj)=>{
