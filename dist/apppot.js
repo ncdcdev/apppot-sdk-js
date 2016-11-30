@@ -3835,18 +3835,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                    if (modelColumns[key]['type'] == types_1.DataType.Long ||
 	                        modelColumns[key]['type'] == types_1.DataType.Integer) {
-	                        _columns[key] = parseInt(columns[key]);
+	                        if (columns[key] == "") {
+	                            _columns[key] = null;
+	                        }
+	                        else {
+	                            _columns[key] = parseInt(columns[key]);
+	                        }
 	                    }
 	                    else if (modelColumns[key]['type'] == types_1.DataType.Bool &&
 	                        typeof _columns[key] != 'boolean') {
-	                        _columns[key] = !!parseInt(columns[key]);
+	                        if (columns[key] == "") {
+	                            _columns[key] = null;
+	                        }
+	                        else {
+	                            _columns[key] = !!parseInt(columns[key]);
+	                        }
 	                    }
 	                    else if (modelColumns[key]['type'] == types_1.DataType.DateTime &&
 	                        !(_columns[key] instanceof Date)) {
-	                        _columns[key] = new Date(parseInt(columns[key]));
+	                        if (columns[key] == "") {
+	                            _columns[key] = null;
+	                        }
+	                        else {
+	                            _columns[key] = new Date(parseInt(columns[key]));
+	                        }
 	                    }
 	                    else if (modelColumns[key]['type'] == types_1.DataType.Double) {
-	                        _columns[key] = parseFloat(columns[key]);
+	                        if (columns[key] == "") {
+	                            _columns[key] = null;
+	                        }
+	                        else {
+	                            _columns[key] = parseFloat(columns[key]);
+	                        }
 	                    }
 	                });
 	                return _columns;
