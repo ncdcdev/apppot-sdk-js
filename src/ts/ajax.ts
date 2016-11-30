@@ -78,7 +78,7 @@ export class Ajax {
   static end(resolve, reject, success?: (obj) => void, failed?: (obj) => void ){
     return function(err, res){
       if(err){
-        const obj = {"status":"error", "results": err};
+        const obj = {"status":"error", "results": err, "response": res};
         if(failed){
           failed(obj);
         }else{

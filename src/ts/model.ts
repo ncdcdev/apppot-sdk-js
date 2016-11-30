@@ -167,10 +167,10 @@ export namespace Model {
       static findById(id:string){
         const func = (resolve, reject) => {
            appPot.getAjax().get(`data/${_className}/${id}`)
-             .end(Ajax.end(resolve, reject, (obj) => {
+             .end(Ajax.end((obj) => {
                const inst = createModelInstance(_className, obj[_className][0]);
                resolve(inst);
-             }));
+             }, reject));
         };
         return new Promise(func);
       }
@@ -352,10 +352,10 @@ export namespace Model {
               objectName: _className,
               data: [columns]
             })
-            .end(Ajax.end(resolve, reject, (obj) => {
+            .end(Ajax.end((obj) => {
               this.set(obj['results'][0]);
               resolve(this);
-            }));
+            }, reject));
         };
         return new Promise(func);
       }
@@ -550,7 +550,20 @@ export namespace Model {
       const func = (resolve, reject) => {
           this._ajax.post(`data/${this._className}`)
             .send(this._queryObj)
-            .end(Ajax.end(resolve, reject));
+            .end(Ajax.end(resolve, (err)=>{
+              if(err.response.statusCode == 404){
+                let models = [this._className];
+                this._queryObj.join.forEach((joinObj)=>{
+                  models.push(joinObj.entity);
+                });
+                let emptyArrays = {};
+                models.forEach((name)=>{
+                  emptyArrays[name] = [];
+                });
+              }else{
+                reject(err);
+              }
+            }));
         };
         return new Promise(func);
     }

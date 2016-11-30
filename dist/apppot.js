@@ -444,7 +444,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Ajax.end = function (resolve, reject, success, failed) {
 	        return function (err, res) {
 	            if (err) {
-	                var obj = { "status": "error", "results": err };
+	                var obj = { "status": "error", "results": err, "response": res };
 	                if (failed) {
 	                    failed(obj);
 	                }
@@ -3753,10 +3753,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            ModelClass.findById = function (id) {
 	                var func = function (resolve, reject) {
 	                    appPot.getAjax().get("data/" + _className + "/" + id)
-	                        .end(ajax_1.Ajax.end(resolve, reject, function (obj) {
+	                        .end(ajax_1.Ajax.end(function (obj) {
 	                        var inst = createModelInstance(_className, obj[_className][0]);
 	                        resolve(inst);
-	                    }));
+	                    }, reject));
 	                };
 	                return new es6_promise_1.Promise(func);
 	            };
@@ -3940,10 +3940,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        objectName: _className,
 	                        data: [columns]
 	                    })
-	                        .end(ajax_1.Ajax.end(resolve, reject, function (obj) {
+	                        .end(ajax_1.Ajax.end(function (obj) {
 	                        _this.set(obj['results'][0]);
 	                        resolve(_this);
-	                    }));
+	                    }, reject));
 	                };
 	                return new es6_promise_1.Promise(func);
 	            };
@@ -4158,7 +4158,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var func = function (resolve, reject) {
 	                _this._ajax.post("data/" + _this._className)
 	                    .send(_this._queryObj)
-	                    .end(ajax_1.Ajax.end(resolve, reject));
+	                    .end(ajax_1.Ajax.end(resolve, function (err) {
+	                    if (err.response.statusCode == 404) {
+	                        var models_1 = [_this._className];
+	                        _this._queryObj.join.forEach(function (joinObj) {
+	                            models_1.push(joinObj.entity);
+	                        });
+	                        var emptyArrays_1 = {};
+	                        models_1.forEach(function (name) {
+	                            emptyArrays_1[name] = [];
+	                        });
+	                    }
+	                    else {
+	                        reject(err);
+	                    }
+	                }));
 	            };
 	            return new es6_promise_1.Promise(func);
 	        };
