@@ -89,11 +89,23 @@ export function getUserClass(appPot:AppPot){
       return this._columns.groupsRoles;
     }
 
-    static list(groupId: number, options?: AjaxOptions){
+    private static _isNumber(x){
+      if( typeof(x) != 'number' && typeof(x) != 'string' ){
+        return false;
+      }else{
+        return (x == parseFloat(x) && isFinite(x));
+      }
+    }
+
+    static list(params, options?: AjaxOptions){
+      let _params = {};
+      if(this._isNumber(params)){
+        _params['groupId'] = params;
+      }
       return new Promise((resolve, reject) => {
         appPot.getAjax().get('users', options)
           .query({ token: appPot.getAuthInfo().getToken() })
-          .query({ groupId: groupId })
+          .query(params)
           .end(Ajax.end((res) => {
             const users = res['users'];
             const userInsts = users.map((user) => {
