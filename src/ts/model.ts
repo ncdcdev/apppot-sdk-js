@@ -310,10 +310,11 @@ export namespace Model {
             }
             _columns[key] = columns[key].getTime();
           }else if(modelColumns[key]['type'] == DataType.Double){
-            if(typeof columns[key] != 'number'){
-              throw new Error(-1, 'invalid type: column ' + _className + '"."' + key + '"');
+            if(typeof columns[key] == 'number'){
+              _columns[key] = columns[key] + "";
+            }else{
+              _columns[key] = parseFloat(columns[key]) + "";
             }
-            _columns[key] = columns[key] + "";
           }
         });
         if(isCreate){
