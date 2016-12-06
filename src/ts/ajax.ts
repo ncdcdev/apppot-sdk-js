@@ -7,6 +7,7 @@ const objectAssign = require('object-assign');
 export interface AjaxOptions {
   entryPoint?: string;
   timeout?: number;
+  contentType?: string;
 }
 
 export class Ajax {
@@ -48,8 +49,10 @@ export class Ajax {
     const opts = this.buildOpts(options);
     let agent = superagent
       .post(opts.entryPoint + url)
-      .timeout(opts.timeout)
-      .set('Content-Type', opts.contentType);
+      .timeout(opts.timeout);
+    if(opts.contentType != 'no-set'){
+      agent.set('Content-Type', opts.contentType);
+    }
     return this.setToken(agent);
   }
 
@@ -62,7 +65,9 @@ export class Ajax {
     let agent = superagent
       .put(opts.entryPoint + url)
       .timeout(opts.timeout)
-      .set('Content-Type', opts.contentType);
+    if(opts.contentType != 'no-set'){
+      agent.set('Content-Type', opts.contentType);
+    }
     return this.setToken(agent);
   }
 
@@ -71,7 +76,9 @@ export class Ajax {
     let agent = superagent
       .del(opts.entryPoint + url)
       .timeout(opts.timeout)
-      .set('Content-Type', opts.contentType);
+    if(opts.contentType != 'no-set'){
+      agent.set('Content-Type', opts.contentType);
+    }
     return this.setToken(agent);
   }
 
@@ -85,6 +92,10 @@ export class Ajax {
           reject(obj);
         }
       }else{
+        if(res.type.match('octet-stream')){
+          resolve(res.text);
+          return;
+        }
         const obj = JSON.parse(res.text);
         if(obj.hasOwnProperty('status') && obj['status'] == 'error'){
           if(failed){

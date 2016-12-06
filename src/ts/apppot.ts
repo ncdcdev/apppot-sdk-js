@@ -9,6 +9,7 @@ import {Database} from './database';
 import {Model} from './model';
 import {getUserClass, GroupsRoles, Role} from './user';
 import {getGroupClass} from './group';
+import {getFileClass} from './file';
 import {DataType} from './types';
 import {Error} from './error';
 import {Promise} from 'es6-promise';
@@ -21,6 +22,7 @@ export class AppPot {
   public User;
   public Group;
   public Model;
+  public File;
   public Role;
   public GroupsRoles;
   public DataType;
@@ -44,6 +46,7 @@ export class AppPot {
     this['User'] = getUserClass(this);
     this['Model'] = Model;
     this['Role'] = Role;
+    this['File'] = getFileClass(this);
     this['GroupsRoles'] = GroupsRoles;
     this['DataType'] = DataType;
     this['Error'] = Error;
