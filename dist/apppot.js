@@ -64,6 +64,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var model_1 = __webpack_require__(18);
 	var user_1 = __webpack_require__(126);
 	var group_1 = __webpack_require__(127);
+	var file_1 = __webpack_require__(128);
 	var types_1 = __webpack_require__(17);
 	var error_1 = __webpack_require__(11);
 	var es6_promise_1 = __webpack_require__(13);
@@ -86,6 +87,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this['User'] = user_1.getUserClass(this);
 	        this['Model'] = model_1.Model;
 	        this['Role'] = user_1.Role;
+	        this['File'] = file_1.getFileClass(this);
 	        this['GroupsRoles'] = user_1.GroupsRoles;
 	        this['DataType'] = types_1.DataType;
 	        this['Error'] = error_1.Error;
@@ -113,10 +115,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1480656201) || "unknown";
+	        return (1480992668) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","9"]).join('.') || "unknown";
+	        return (["2","3","10"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -418,8 +420,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var opts = this.buildOpts(options);
 	        var agent = superagent
 	            .post(opts.entryPoint + url)
-	            .timeout(opts.timeout)
-	            .set('Content-Type', opts.contentType);
+	            .timeout(opts.timeout);
+	        if (opts.contentType != 'no-set') {
+	            agent.set('Content-Type', opts.contentType);
+	        }
 	        return this.setToken(agent);
 	    };
 	    Ajax.prototype.update = function (url, options) {
@@ -429,16 +433,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var opts = this.buildOpts(options);
 	        var agent = superagent
 	            .put(opts.entryPoint + url)
-	            .timeout(opts.timeout)
-	            .set('Content-Type', opts.contentType);
+	            .timeout(opts.timeout);
+	        if (opts.contentType != 'no-set') {
+	            agent.set('Content-Type', opts.contentType);
+	        }
 	        return this.setToken(agent);
 	    };
 	    Ajax.prototype.remove = function (url, options) {
 	        var opts = this.buildOpts(options);
 	        var agent = superagent
 	            .del(opts.entryPoint + url)
-	            .timeout(opts.timeout)
-	            .set('Content-Type', opts.contentType);
+	            .timeout(opts.timeout);
+	        if (opts.contentType != 'no-set') {
+	            agent.set('Content-Type', opts.contentType);
+	        }
 	        return this.setToken(agent);
 	    };
 	    Ajax.end = function (resolve, reject, success, failed) {
@@ -453,6 +461,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 	            else {
+	                if (res.type.match('octet-stream')) {
+	                    resolve(res.text);
+	                    return;
+	                }
 	                var obj = JSON.parse(res.text);
 	                if (obj.hasOwnProperty('status') && obj['status'] == 'error') {
 	                    if (failed) {
@@ -3895,10 +3907,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        _columns[key] = columns[key].getTime();
 	                    }
 	                    else if (modelColumns[key]['type'] == types_1.DataType.Double) {
-	                        if (typeof columns[key] != 'number') {
-	                            throw new error_1.Error(-1, 'invalid type: column ' + _className + '"."' + key + '"');
+	                        if (typeof columns[key] == 'number') {
+	                            _columns[key] = columns[key] + "";
 	                        }
-	                        _columns[key] = columns[key] + "";
+	                        else {
+	                            _columns[key] = parseFloat(columns[key]) + "";
+	                        }
 	                    }
 	                });
 	                if (isCreate) {
@@ -18981,6 +18995,98 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }());
 	}
 	exports.getGroupClass = getGroupClass;
+
+
+/***/ },
+/* 128 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var ajax_1 = __webpack_require__(4);
+	var es6_promise_1 = __webpack_require__(13);
+	function getFileClass(appPot) {
+	    return (function () {
+	        function File(name, url) {
+	            this._name = name;
+	            this._url = url;
+	        }
+	        File.getUrl = function (filename) {
+	            return appPot.getConfig().entryPoint + "files/" + filename + "?userToken=" + appPot.getAuthInfo().getToken();
+	        };
+	        Object.defineProperty(File.prototype, "url", {
+	            get: function () {
+	                return appPot.getConfig().entryPoint + "files/" + this.name + "?userToken=" + appPot.getAuthInfo().getToken();
+	            },
+	            enumerable: true,
+	            configurable: true
+	        });
+	        Object.defineProperty(File.prototype, "name", {
+	            get: function () {
+	                return this._name;
+	            },
+	            enumerable: true,
+	            configurable: true
+	        });
+	        File.create = function (filename, content, progress) {
+	            var prog = progress ? progress : function () { };
+	            var entity = JSON.stringify({ name: filename });
+	            return new es6_promise_1.Promise(function (resolve, reject) {
+	                appPot.getAjax().post('files', {
+	                    'contentType': 'no-set'
+	                })
+	                    .field('entity', entity)
+	                    .attach('file', content)
+	                    .on('progress', prog)
+	                    .end(ajax_1.Ajax.end(function (res) {
+	                    var file = new File(res.results.name, res.results.url);
+	                    resolve(file);
+	                }, reject));
+	            });
+	        };
+	        File.prototype.get = function (progress) {
+	            return File.get(this.name, progress);
+	        };
+	        File.get = function (filename, progress) {
+	            var prog = progress ? progress : function () { };
+	            return new es6_promise_1.Promise(function (resolve, reject) {
+	                appPot.getAjax().get("files/" + filename)
+	                    .query("userToken=" + appPot.getAuthInfo().getToken())
+	                    .on('progress', prog)
+	                    .end(ajax_1.Ajax.end(function (res) {
+	                    resolve(res);
+	                }, reject));
+	            });
+	        };
+	        File.prototype.update = function (filename, content, progress) {
+	            var _this = this;
+	            var prog = progress ? progress : function () { };
+	            var entity = JSON.stringify({ name: filename });
+	            return new es6_promise_1.Promise(function (resolve, reject) {
+	                appPot.getAjax().put("files/" + _this.name, {
+	                    'contentType': 'no-set'
+	                })
+	                    .field('entity', entity)
+	                    .attach('file', content)
+	                    .on('progress', prog)
+	                    .end(ajax_1.Ajax.end(function (res) {
+	                    var file = new File(res.results.name, res.results.url);
+	                    resolve(file);
+	                }, reject));
+	            });
+	        };
+	        File.prototype.remove = function (filename) {
+	            var _this = this;
+	            return new es6_promise_1.Promise(function (resolve, reject) {
+	                appPot.getAjax().remove("files/" + _this.name)
+	                    .end(ajax_1.Ajax.end(function (res) {
+	                    resolve(res);
+	                }, reject));
+	            });
+	        };
+	        return File;
+	    }());
+	}
+	exports.getFileClass = getFileClass;
 
 
 /***/ }
