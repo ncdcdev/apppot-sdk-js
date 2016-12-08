@@ -101,11 +101,13 @@ export function getUserClass(appPot:AppPot){
       let _params = {};
       if(this._isNumber(params)){
         _params['groupId'] = params;
+      }else{
+        _params = params;
       }
       return new Promise((resolve, reject) => {
         appPot.getAjax().get('users', options)
           .query({ token: appPot.getAuthInfo().getToken() })
-          .query(params)
+          .query(_params)
           .end(Ajax.end((res) => {
             const users = res['users'];
             const userInsts = users.map((user) => {

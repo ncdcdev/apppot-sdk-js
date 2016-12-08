@@ -115,7 +115,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1480992668) || "unknown";
+	        return (1481178535) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
 	        return (["2","3","10"]).join('.') || "unknown";
@@ -18746,10 +18746,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (this._isNumber(params)) {
 	                _params['groupId'] = params;
 	            }
+	            else {
+	                _params = params;
+	            }
 	            return new es6_promise_1.Promise(function (resolve, reject) {
 	                appPot.getAjax().get('users', options)
 	                    .query({ token: appPot.getAuthInfo().getToken() })
-	                    .query(params)
+	                    .query(_params)
 	                    .end(ajax_1.Ajax.end(function (res) {
 	                    var users = res['users'];
 	                    var userInsts = users.map(function (user) {
