@@ -183,20 +183,29 @@ export class GroupsRoles {
   constructor(args){
     if(args.group && args.role){
       this._groupId = args.group.groupId;
-      this._roleId = Role[args.role.roleName];
+      this._roleId = Role[this._roleNameToRoleId(args.role.roleName)];
       this._groupName = args.group.groupName;
     }
     if(args.groupId){
       this._groupId = args.groupId;
     }
     if(args.roleName && !this._roleId){
-      this._roleId = Role[args.roleName];
+      this._roleId = Role[this._roleNameToRoleId(args.roleName)];
     }
     if(args.role && !this._roleId){
       this._roleId = args.role;
     }
     if(args.groupName){
       this._groupName = args.groupName;
+    }
+  }
+
+  _roleNameToRoleId(name){
+    switch(name){
+      case 'Super Admin':
+        return +Role.SuperAdmin;
+      default:
+        return +Role[name];
     }
   }
 
@@ -220,8 +229,6 @@ export class GroupsRoles {
 
   get roleName(){
     switch(this._roleId){
-      case Role.SuperAdmin:
-        return "Super Admin";
       default:
         return Role[this._roleId];
     }

@@ -115,10 +115,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1481178535) || "unknown";
+	        return (1483191991) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","10"]).join('.') || "unknown";
+	        return (["2","3","12"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -18823,14 +18823,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function GroupsRoles(args) {
 	        if (args.group && args.role) {
 	            this._groupId = args.group.groupId;
-	            this._roleId = Role[args.role.roleName];
+	            this._roleId = Role[this._roleNameToRoleId(args.role.roleName)];
 	            this._groupName = args.group.groupName;
 	        }
 	        if (args.groupId) {
 	            this._groupId = args.groupId;
 	        }
 	        if (args.roleName && !this._roleId) {
-	            this._roleId = Role[args.roleName];
+	            this._roleId = Role[this._roleNameToRoleId(args.roleName)];
 	        }
 	        if (args.role && !this._roleId) {
 	            this._roleId = args.role;
@@ -18839,6 +18839,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this._groupName = args.groupName;
 	        }
 	    }
+	    GroupsRoles.prototype._roleNameToRoleId = function (name) {
+	        switch (name) {
+	            case 'Super Admin':
+	                return +Role.SuperAdmin;
+	            default:
+	                return +Role[name];
+	        }
+	    };
 	    GroupsRoles.prototype.setGroupsRoles = function (obj) {
 	        this._groupId = obj.group.groupId;
 	        this._roleId = Role[obj.role.roleName];
@@ -18868,8 +18876,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Object.defineProperty(GroupsRoles.prototype, "roleName", {
 	        get: function () {
 	            switch (this._roleId) {
-	                case Role.SuperAdmin:
-	                    return "Super Admin";
 	                default:
 	                    return Role[this._roleId];
 	            }
