@@ -51,10 +51,11 @@ describe('Modelのテスト', function(){
         var index = leftPad(i+1, 2);
         models.push(
           new TaskModel({
-          title: 'model_spec' + index,
-          description: 'test-descriptions' + index,
-          limit: self.numOfTask-i,
-          placeId: self.placeIds[i%self.numOfPlace]
+            title: 'model_spec' + index,
+            description: 'test-descriptions' + index,
+            limit: self.numOfTask-i,
+            placeId: self.placeIds[i%self.numOfPlace],
+            registeredDate: new Date()
           })
         );
       }

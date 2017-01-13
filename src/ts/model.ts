@@ -131,11 +131,11 @@ export namespace Model {
         }else{
           _columns = objects;
           _models = _columns.map((column) => {
-            return createModelInstance(_className, column);
+            return new this(column);
           });
         }
-        const _formatedColumns = _columns.map((record)=>{
-          return classList[_className].formatColumns(record, true);
+        const _formatedColumns = _models.map((_model) => {
+          return classList[_className].formatColumns(_model.get(), true);
         });
         return classList[_className]._rawInsert(_formatedColumns)
           .then((obj)=>{
@@ -265,20 +265,20 @@ export namespace Model {
             }
           }else if(modelColumns[key]['type'] == DataType.Bool &&
                   typeof _columns[key] != 'boolean' ){
-            if(columns[key] == ""){
+            if(columns[key] === ""){
               _columns[key] = null;
             }else{
               _columns[key] = !!parseInt(columns[key]);
             }
           }else if(modelColumns[key]['type'] == DataType.DateTime &&
                    !(_columns[key] instanceof Date) ){
-            if(columns[key] == ""){
+            if(columns[key] === ""){
               _columns[key] = null;
             }else{
               _columns[key] = new Date(parseInt(columns[key]));
             }
           }else if(modelColumns[key]['type'] == DataType.Double){
-            if(columns[key] == ""){
+            if(columns[key] === ""){
               _columns[key] = null;
             }else{
               _columns[key] = parseFloat(columns[key]);
@@ -330,7 +330,7 @@ export namespace Model {
           filteredColumns[col] = columns[col];
         });
         filteredColumns['objectId'] = columns['objectId'];
-        filteredColumns['scopeType'] = columns['scopeType'] || 1;
+        filteredColumns['scopeType'] = columns['scopeType'] || 2;
         filteredColumns['serverCreateTime'] = columns['serverCreateTime'];
         filteredColumns['serverUpdateTime'] = columns['serverUpdateTime'];
         filteredColumns['createTime'] = columns['createTime'];
@@ -339,7 +339,7 @@ export namespace Model {
       }
 
       insert(...args){
-        this.set.apply(this, args);
+        this.set(args);
         if(!this.isNew()){
           return Promise.reject(new Error(-1, 'object is created'));
         }
