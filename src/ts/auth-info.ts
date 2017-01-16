@@ -46,7 +46,7 @@ export class AuthInfo implements Serializable {
   serialize(){
     let obj = {};
     obj['token'] = this._token;
-    obj['user'] = this._user;
+    obj['user'] = this._user._columns;
     return JSON.stringify(obj);
   }
 
@@ -54,7 +54,7 @@ export class AuthInfo implements Serializable {
     const obj = JSON.parse(str);
     if(obj){
       this.setToken(obj['token']);
-      const user = new (this.apppot.User)(obj['user']['_columns'])
+      const user = new (this.apppot.User)(obj['user'])
       this.setUser(user);
       return true;
     }

@@ -7,6 +7,7 @@ import {Ajax} from './ajax';
 import {LocalAuthenticator} from './local-authenticator';
 import {Database} from './database';
 import {Model} from './model';
+import Device from './device';
 import {getUserClass, GroupsRoles, Role} from './user';
 import {getGroupClass} from './group';
 import {getFileClass} from './file';
@@ -22,6 +23,7 @@ export class AppPot {
   public User;
   public Group;
   public Model;
+  public Device;
   public File;
   public Role;
   public GroupsRoles;
@@ -45,6 +47,7 @@ export class AppPot {
     }
     this['User'] = getUserClass(this);
     this['Model'] = Model;
+    this['Device'] = Device;
     this['Role'] = Role;
     this['File'] = getFileClass(this);
     this['GroupsRoles'] = GroupsRoles;
@@ -80,7 +83,7 @@ export class AppPot {
     return APPPOT_VERSION.join('.') || "unknown";
   }
   log(str, level = 'MONITOR'){
-    if(!this['LocalAuthenticator'].isLogined()){
+    if(!this._authInfo.hasToken()){
       return Promise.reject('not logined');
     }
     return new Promise((resolve, reject)=>{
@@ -91,6 +94,25 @@ export class AppPot {
         logLevel: level
       })
       .end(Ajax.end(resolve, reject));
+    });
+  }
+  sendPushNotification(message, target){
+    if(!this._authInfo.hasToken()){
+      return Promise.reject('not logined');
+    }
+
+    console.log('sending push notification...');
+
+    const _target = (target instanceof Array) ? target : [target];
+
+    return new Promise((resolve, reject)=>{
+      this._ajax
+        .post('messages')
+        .send({
+          message: message,
+          target: _target
+        })
+        .end(Ajax.end(resolve, reject));
     });
   }
 }

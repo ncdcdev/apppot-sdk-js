@@ -1,6 +1,7 @@
 import {Ajax} from './ajax';
 import {AppPot} from './apppot';
 import {Promise} from 'es6-promise';
+import Device from './device';
 const objectAssign = require('object-assign');
 
 export class LocalAuthenticator {
@@ -12,9 +13,16 @@ export class LocalAuthenticator {
     this._appPot = appPot;
   }
 
-  login = (user: string, pass: string) => {
-    return this.getAnonymousToken()
-      .then(()=>{ return this.apiLogin(user, pass); });
+  login = (user: string, pass: string, isPush?: boolean, device?: Device) => {
+    return this.getAnonymousToken(device)
+      .then(()=>{
+        if(isPush && device){
+          return this.devices(device);
+        }else{
+          return true;
+        }
+      })
+      .then(()=>{ return this.apiLogin(user, pass, isPush, device); });
   }
 
   logout = () => {
@@ -25,11 +33,11 @@ export class LocalAuthenticator {
     return this._isLogined;
   }
 
-  getAnonymousToken = () => {
+  getAnonymousToken = (device?:Device) => {
     return new Promise((resolve, reject) => {
       this._appPot.getAjax().get('anonymousTokens')
         .query(`appKey=${this._appPot.getConfig().appKey}`)
-        .query(`deviceUDID=${this._appPot.getConfig().deviceUDID}`)
+        .query(`deviceUDID=${device&&device.udid||this._appPot.getConfig().deviceUDID}`)
         .end(Ajax.end(resolve, reject, (obj) => {
           this._appPot.getAuthInfo().setToken(obj.results);
           resolve(obj.results);
@@ -37,7 +45,23 @@ export class LocalAuthenticator {
     });
   }
 
-  private apiLogin(user:string, pass:string){
+  private devices(device:Device){
+    return new Promise((resolve, reject) => {
+      this._appPot.getAjax().post('devices')
+        .set('apppot-token', this._appPot.getAuthInfo().getToken())
+        .send({
+          deviceToken: device.token,
+          deviceUDID:  device.udid,
+          deviceName:  device.name,
+          osType: device.osType
+        })
+        .end(Ajax.end(resolve, reject, (obj) => {
+          resolve();
+        }));
+    });
+  }
+
+  private apiLogin(user:string, pass:string, isPush:boolean,  device?:Device){
     this._appPot.getAuthInfo().clearUser();
     return new Promise((resolve, reject) => {
       this._appPot.getAjax().post('auth/login')
@@ -46,8 +70,8 @@ export class LocalAuthenticator {
           username: user,
           password: pass,
           appId: this._appPot.getConfig().appId,
-          deviceUDID: this._appPot.getConfig().deviceUDID,
-          isPush: false,
+          deviceUDID: device ? device.udid : this._appPot.getConfig().deviceUDID,
+          isPush: !!isPush,
           appVersion: this._appPot.getConfig().appVersion,
           companyId: this._appPot.getConfig().companyId
         })

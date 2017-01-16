@@ -181,6 +181,13 @@ export class GroupsRoles {
   private _roleId;
   private _groupName;
   constructor(args){
+    //restore
+    if(args._groupId && args._groupName && args._roleId){
+      this._groupId = args._groupId;
+      this._groupName = args._groupName;
+      this._roleId = args._roleId;
+      return this;
+    }
     if(args.group && args.role){
       this._groupId = args.group.groupId;
       this._roleId = Role[this._roleNameToRoleId(args.role.roleName)];

@@ -62,9 +62,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var local_authenticator_1 = __webpack_require__(12);
 	var database_1 = __webpack_require__(16);
 	var model_1 = __webpack_require__(18);
-	var user_1 = __webpack_require__(130);
-	var group_1 = __webpack_require__(131);
-	var file_1 = __webpack_require__(132);
+	var device_1 = __webpack_require__(130);
+	var user_1 = __webpack_require__(131);
+	var group_1 = __webpack_require__(132);
+	var file_1 = __webpack_require__(133);
 	var types_1 = __webpack_require__(17);
 	var error_1 = __webpack_require__(11);
 	var es6_promise_1 = __webpack_require__(13);
@@ -86,6 +87,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        this['User'] = user_1.getUserClass(this);
 	        this['Model'] = model_1.Model;
+	        this['Device'] = device_1.default;
 	        this['Role'] = user_1.Role;
 	        this['File'] = file_1.getFileClass(this);
 	        this['GroupsRoles'] = user_1.GroupsRoles;
@@ -115,15 +117,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1484293820) || "unknown";
+	        return (1484531756) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","13"]).join('.') || "unknown";
+	        return (["2","3","14"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
 	        if (level === void 0) { level = 'MONITOR'; }
-	        if (!this['LocalAuthenticator'].isLogined()) {
+	        if (!this._authInfo.hasToken()) {
 	            return es6_promise_1.Promise.reject('not logined');
 	        }
 	        return new es6_promise_1.Promise(function (resolve, reject) {
@@ -132,6 +134,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	                .send({
 	                message: str,
 	                logLevel: level
+	            })
+	                .end(ajax_1.Ajax.end(resolve, reject));
+	        });
+	    };
+	    AppPot.prototype.sendPushNotification = function (message, target) {
+	        var _this = this;
+	        if (!this._authInfo.hasToken()) {
+	            return es6_promise_1.Promise.reject('not logined');
+	        }
+	        console.log('sending push notification...');
+	        var _target = (target instanceof Array) ? target : [target];
+	        return new es6_promise_1.Promise(function (resolve, reject) {
+	            _this._ajax
+	                .post('messages')
+	                .send({
+	                message: message,
+	                target: _target
 	            })
 	                .end(ajax_1.Ajax.end(resolve, reject));
 	        });
@@ -273,14 +292,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    AuthInfo.prototype.serialize = function () {
 	        var obj = {};
 	        obj['token'] = this._token;
-	        obj['user'] = this._user;
+	        obj['user'] = this._user._columns;
 	        return JSON.stringify(obj);
 	    };
 	    AuthInfo.prototype.deserialize = function (str) {
 	        var obj = JSON.parse(str);
 	        if (obj) {
 	            this.setToken(obj['token']);
-	            var user = new (this.apppot.User)(obj['user']['_columns']);
+	            var user = new (this.apppot.User)(obj['user']);
 	            this.setUser(user);
 	            return true;
 	        }
@@ -2040,9 +2059,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	var LocalAuthenticator = (function () {
 	    function LocalAuthenticator(appPot) {
 	        var _this = this;
-	        this.login = function (user, pass) {
-	            return _this.getAnonymousToken()
-	                .then(function () { return _this.apiLogin(user, pass); });
+	        this.login = function (user, pass, isPush, device) {
+	            return _this.getAnonymousToken(device)
+	                .then(function () {
+	                if (isPush && device) {
+	                    return _this.devices(device);
+	                }
+	                else {
+	                    return true;
+	                }
+	            })
+	                .then(function () { return _this.apiLogin(user, pass, isPush, device); });
 	        };
 	        this.logout = function () {
 	            return _this.apiLogout();
@@ -2050,11 +2077,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.isLogined = function () {
 	            return _this._isLogined;
 	        };
-	        this.getAnonymousToken = function () {
+	        this.getAnonymousToken = function (device) {
 	            return new es6_promise_1.Promise(function (resolve, reject) {
 	                _this._appPot.getAjax().get('anonymousTokens')
 	                    .query("appKey=" + _this._appPot.getConfig().appKey)
-	                    .query("deviceUDID=" + _this._appPot.getConfig().deviceUDID)
+	                    .query("deviceUDID=" + (device && device.udid || _this._appPot.getConfig().deviceUDID))
 	                    .end(ajax_1.Ajax.end(resolve, reject, function (obj) {
 	                    _this._appPot.getAuthInfo().setToken(obj.results);
 	                    resolve(obj.results);
@@ -2063,7 +2090,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	        this._appPot = appPot;
 	    }
-	    LocalAuthenticator.prototype.apiLogin = function (user, pass) {
+	    LocalAuthenticator.prototype.devices = function (device) {
+	        var _this = this;
+	        return new es6_promise_1.Promise(function (resolve, reject) {
+	            _this._appPot.getAjax().post('devices')
+	                .set('apppot-token', _this._appPot.getAuthInfo().getToken())
+	                .send({
+	                deviceToken: device.token,
+	                deviceUDID: device.udid,
+	                deviceName: device.name,
+	                osType: device.osType
+	            })
+	                .end(ajax_1.Ajax.end(resolve, reject, function (obj) {
+	                resolve();
+	            }));
+	        });
+	    };
+	    LocalAuthenticator.prototype.apiLogin = function (user, pass, isPush, device) {
 	        var _this = this;
 	        this._appPot.getAuthInfo().clearUser();
 	        return new es6_promise_1.Promise(function (resolve, reject) {
@@ -2073,8 +2116,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                username: user,
 	                password: pass,
 	                appId: _this._appPot.getConfig().appId,
-	                deviceUDID: _this._appPot.getConfig().deviceUDID,
-	                isPush: false,
+	                deviceUDID: device ? device.udid : _this._appPot.getConfig().deviceUDID,
+	                isPush: !!isPush,
 	                appVersion: _this._appPot.getConfig().appVersion,
 	                companyId: _this._appPot.getConfig().companyId
 	            })
@@ -19121,6 +19164,60 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 130 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var Device = (function () {
+	    function Device(args) {
+	        var _this = this;
+	        this._columns = {
+	            udid: "",
+	            name: "",
+	            osType: "",
+	            token: ""
+	        };
+	        Object.keys(this._columns).forEach(function (key) {
+	            if (args[key]) {
+	                _this._columns[key] = args[key];
+	            }
+	        });
+	    }
+	    Object.defineProperty(Device.prototype, "udid", {
+	        get: function () {
+	            return this._columns['udid'];
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    Object.defineProperty(Device.prototype, "token", {
+	        get: function () {
+	            return this._columns['token'];
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    Object.defineProperty(Device.prototype, "name", {
+	        get: function () {
+	            return this._columns['name'];
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    Object.defineProperty(Device.prototype, "osType", {
+	        get: function () {
+	            return this._columns['osType'];
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    return Device;
+	}());
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = Device;
+
+
+/***/ },
+/* 131 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -19309,6 +19406,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Role = exports.Role;
 	var GroupsRoles = (function () {
 	    function GroupsRoles(args) {
+	        //restore
+	        if (args._groupId && args._groupName && args._roleId) {
+	            this._groupId = args._groupId;
+	            this._groupName = args._groupName;
+	            this._roleId = args._roleId;
+	            return this;
+	        }
 	        if (args.group && args.role) {
 	            this._groupId = args.group.groupId;
 	            this._roleId = Role[this._roleNameToRoleId(args.role.roleName)];
@@ -19387,7 +19491,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 131 */
+/* 132 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -19495,7 +19599,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 132 */
+/* 133 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
