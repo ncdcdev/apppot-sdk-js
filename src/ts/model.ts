@@ -131,7 +131,8 @@ export namespace Model {
         }else{
           _columns = objects;
           _models = _columns.map((column) => {
-            return new this(column);
+            const model =  new this(column);
+            return model;
           });
         }
         const _formatedColumns = _models.map((_model) => {
@@ -160,7 +161,7 @@ export namespace Model {
               _formatedColumns[0],
               obj['results'][0]
             );
-            return createModelInstance(_className, createdColumns);
+            return new this(createdColumns);
           });
       }
 
@@ -168,7 +169,7 @@ export namespace Model {
         const func = (resolve, reject) => {
            appPot.getAjax().get(`data/${_className}/${id}`)
              .end(Ajax.end((obj) => {
-               const inst = createModelInstance(_className, obj[_className][0]);
+               const inst = new this(obj[_className][0]);
                resolve(inst);
              }, reject));
         };
@@ -183,7 +184,7 @@ export namespace Model {
         if(alias){
           alias = alias.replace(/^#+/, '');
         }
-        return new Query(appPot, _className, alias);
+        return new Query(appPot, this, alias);
       }
 
       isNew(){
@@ -258,7 +259,7 @@ export namespace Model {
           }
           if(modelColumns[key]['type'] == DataType.Long ||
              modelColumns[key]['type'] == DataType.Integer){
-            if(columns[key] == ""){
+            if(columns[key] === ""){
               _columns[key] = null;
             }else{
               _columns[key] = parseInt(columns[key]);
@@ -339,7 +340,7 @@ export namespace Model {
       }
 
       insert(...args){
-        this.set(args);
+        this.set.apply(this, args);
         if(!this.isNew()){
           return Promise.reject(new Error(-1, 'object is created'));
         }
@@ -415,21 +416,21 @@ export namespace Model {
   class Query {
 
     private _queryObj: any;
-    private _className: string;
+    private _class;
     private _ajax: Ajax;
 
-    constructor(appPot:AppPot, className:string, alias?:string){
-      this._className = className;
+    constructor(appPot:AppPot, classObj, alias?:string){
+      this._class = classObj;
       this._queryObj = {
         'from': {
-          'phyName': this._className
+          'phyName': this._class.className
         }
       };
       this._ajax = appPot.getAjax();
       if(alias){
         this._queryObj['from']['alias'] = alias;
       }else{
-        this._queryObj['from']['alias'] = this._className;
+        this._queryObj['from']['alias'] = this._class.className;
       }
     }
 
@@ -543,7 +544,11 @@ export namespace Model {
         .then((obj) => {
           let ret = {};
           Object.keys(obj).forEach((key) => {
-            ret[key] = createModelInstance(key, obj[key][0]);
+            if(key == this._class.className){
+              ret[key] = new this._class(obj[key][0]);
+            }else{
+              ret[key] = createModelInstance(key, obj[key][0]);
+            }
           });
           return ret;
         });
@@ -556,7 +561,11 @@ export namespace Model {
           Object.keys(obj).forEach((key) => {
             ret[key] = [];
             obj[key].forEach((valval, idx) => {
-              ret[key].push(createModelInstance(key, valval));
+              if(key == this._class.className){
+                ret[key].push(new this._class(valval));
+              }else{
+                ret[key].push(createModelInstance(key, valval));
+              }
             })
           });
           return ret;
@@ -565,11 +574,11 @@ export namespace Model {
 
     private _post(){
       const func = (resolve, reject) => {
-          this._ajax.post(`data/${this._className}`)
+          this._ajax.post(`data/${this._class.className}`)
             .send(this._queryObj)
             .end(Ajax.end(resolve, (err)=>{
               if(err.response && err.response.statusCode == 404){
-                let models = [this._className];
+                let models = [this._class.className];
                 if(this._queryObj.join instanceof Array){
                   this._queryObj.join.forEach((joinObj)=>{
                     models.push(joinObj.entity);

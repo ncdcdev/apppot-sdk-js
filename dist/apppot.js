@@ -117,10 +117,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1484531756) || "unknown";
+	        return (1484866740) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","14"]).join('.') || "unknown";
+	        return (["2","3","15"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -3780,7 +3780,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                else {
 	                    _columns = objects;
 	                    _models = _columns.map(function (column) {
-	                        return new _this(column);
+	                        var model = new _this(column);
+	                        return model;
 	                    });
 	                }
 	                var _formatedColumns = _models.map(function (_model) {
@@ -3795,6 +3796,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                });
 	            };
 	            ModelClass.insert = function (data) {
+	                var _this = this;
 	                if (data instanceof Array) {
 	                    throw 'invalid argument type: use insertAll';
 	                }
@@ -3803,14 +3805,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    .then(function (obj) {
 	                    var ret = [];
 	                    var createdColumns = objectAssign({}, _formatedColumns[0], obj['results'][0]);
-	                    return createModelInstance(_className, createdColumns);
+	                    return new _this(createdColumns);
 	                });
 	            };
 	            ModelClass.findById = function (id) {
+	                var _this = this;
 	                var func = function (resolve, reject) {
 	                    appPot.getAjax().get("data/" + _className + "/" + id)
 	                        .end(ajax_1.Ajax.end(function (obj) {
-	                        var inst = createModelInstance(_className, obj[_className][0]);
+	                        var inst = new _this(obj[_className][0]);
 	                        resolve(inst);
 	                    }, reject));
 	                };
@@ -3823,7 +3826,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (alias) {
 	                    alias = alias.replace(/^#+/, '');
 	                }
-	                return new Query(appPot, _className, alias);
+	                return new Query(appPot, this, alias);
 	            };
 	            ModelClass.prototype.isNew = function () {
 	                return !this._columns['objectId'];
@@ -3891,7 +3894,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                    if (modelColumns[key]['type'] == types_1.DataType.Long ||
 	                        modelColumns[key]['type'] == types_1.DataType.Integer) {
-	                        if (columns[key] == "") {
+	                        if (columns[key] === "") {
 	                            _columns[key] = null;
 	                        }
 	                        else {
@@ -3984,7 +3987,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                for (var _i = 0; _i < arguments.length; _i++) {
 	                    args[_i - 0] = arguments[_i];
 	                }
-	                this.set(args);
+	                this.set.apply(this, args);
 	                if (!this.isNew()) {
 	                    return es6_promise_1.Promise.reject(new error_1.Error(-1, 'object is created'));
 	                }
@@ -4074,11 +4077,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    Model.define = define;
 	    var Query = (function () {
-	        function Query(appPot, className, alias) {
-	            this._className = className;
+	        function Query(appPot, classObj, alias) {
+	            this._class = classObj;
 	            this._queryObj = {
 	                'from': {
-	                    'phyName': this._className
+	                    'phyName': this._class.className
 	                }
 	            };
 	            this._ajax = appPot.getAjax();
@@ -4086,7 +4089,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                this._queryObj['from']['alias'] = alias;
 	            }
 	            else {
-	                this._queryObj['from']['alias'] = this._className;
+	                this._queryObj['from']['alias'] = this._class.className;
 	            }
 	        }
 	        Query.prototype.normalizeExpression = function (args) {
@@ -4205,6 +4208,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return this;
 	        };
 	        Query.prototype.findOne = function () {
+	            var _this = this;
 	            this._queryObj['range'] = this._queryObj['range'] || {
 	                limit: 1,
 	                offset: 1
@@ -4213,19 +4217,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	                .then(function (obj) {
 	                var ret = {};
 	                Object.keys(obj).forEach(function (key) {
-	                    ret[key] = createModelInstance(key, obj[key][0]);
+	                    if (key == _this._class.className) {
+	                        ret[key] = new _this._class(obj[key][0]);
+	                    }
+	                    else {
+	                        ret[key] = createModelInstance(key, obj[key][0]);
+	                    }
 	                });
 	                return ret;
 	            });
 	        };
 	        Query.prototype.findList = function () {
+	            var _this = this;
 	            return this._post()
 	                .then(function (obj) {
 	                var ret = {};
 	                Object.keys(obj).forEach(function (key) {
 	                    ret[key] = [];
 	                    obj[key].forEach(function (valval, idx) {
-	                        ret[key].push(createModelInstance(key, valval));
+	                        if (key == _this._class.className) {
+	                            ret[key].push(new _this._class(valval));
+	                        }
+	                        else {
+	                            ret[key].push(createModelInstance(key, valval));
+	                        }
 	                    });
 	                });
 	                return ret;
@@ -4234,11 +4249,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        Query.prototype._post = function () {
 	            var _this = this;
 	            var func = function (resolve, reject) {
-	                _this._ajax.post("data/" + _this._className)
+	                _this._ajax.post("data/" + _this._class.className)
 	                    .send(_this._queryObj)
 	                    .end(ajax_1.Ajax.end(resolve, function (err) {
 	                    if (err.response && err.response.statusCode == 404) {
-	                        var models_1 = [_this._className];
+	                        var models_1 = [_this._class.className];
 	                        if (_this._queryObj.join instanceof Array) {
 	                            _this._queryObj.join.forEach(function (joinObj) {
 	                                models_1.push(joinObj.entity);
