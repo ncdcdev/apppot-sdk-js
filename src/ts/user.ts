@@ -181,6 +181,9 @@ export class GroupsRoles {
   private _roleId;
   private _groupName;
   constructor(args){
+    if(args instanceof GroupsRoles){
+      return args;
+    }
     //restore
     if(args._groupId && args._groupName && args._roleId){
       this._groupId = args._groupId;
@@ -190,14 +193,14 @@ export class GroupsRoles {
     }
     if(args.group && args.role){
       this._groupId = args.group.groupId;
-      this._roleId = Role[this._roleNameToRoleId(args.role.roleName)];
+      this._roleId = this._roleNameToRoleId(args.role.roleName);
       this._groupName = args.group.groupName;
     }
     if(args.groupId){
       this._groupId = args.groupId;
     }
     if(args.roleName && !this._roleId){
-      this._roleId = Role[this._roleNameToRoleId(args.roleName)];
+      this._roleId = this._roleNameToRoleId(args.roleName);
     }
     if(args.role && !this._roleId){
       this._roleId = args.role;

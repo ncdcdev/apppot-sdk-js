@@ -1,8 +1,9 @@
 describe('createDatabaseのテスト', function(){
   beforeEach(function(done){
-    AppPot.LocalAuthenticator.login(account.username, account.password).then(function(){
-      done()
-    });
+    AppPot.LocalAuthenticator.login(account.username, account.password)
+      .then(function(){
+        done()
+      });
   });
 
   it('新しいスキーマを作成できる', function(done){

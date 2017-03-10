@@ -115,6 +115,34 @@ export class AppPot {
         .end(Ajax.end(resolve, reject));
     });
   }
+
+  sendMail(sendingRouteName, mailFrom, mailTo, mailCc, mailBcc, subject, body){
+    if(!this._authInfo.hasToken()){
+      return Promise.reject('not logined');
+    }
+    if( !(mailTo instanceof Array) ||
+       !(mailCc instanceof Array) ||
+       !(mailBcc instanceof Array) ){
+      return Promise.reject('mailTo, mailCc, mailBcc must be array');
+    }
+    if( mailTo.length == 0 && mailCc.length == 0 && mailBcc.length == 0 ){
+      return Promise.reject('destination address is not specified');
+    }
+
+    return new Promise((resolve, reject) => {
+      this._ajax.post('emails')
+        .send({
+          mailFrom: mailFrom,
+          mailTo: mailTo,
+          mailCc: mailCc,
+          mailBcc: mailBcc,
+          sendingRouteName: sendingRouteName,
+          subject: subject,
+          body: body
+        })
+        .end(Ajax.end(resolve, reject));
+    });
+  }
 }
 
 let appPotInst = null;

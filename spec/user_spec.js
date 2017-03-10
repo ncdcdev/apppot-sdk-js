@@ -39,12 +39,14 @@ describe('User管理APIのテスト', function(){
       })
     });
 
+
     targetUser.create().then(function(user){
       expect(user instanceof AppPot.User).toBeTruthy();
       expect(user.groupsRoles instanceof Array).toBeTruthy();
       expect(user.groupsRoles[0] instanceof AppPot.GroupsRoles).toBeTruthy();
       expect(user.groupsRoles[0].groupId).toEqual(gr.groupId);
       expect(user.groupsRoles[0].groupName).toEqual(gr.groupName);
+      expect(user.groupsRoles[0].role).toEqual(3);
       return AppPot.LocalAuthenticator.logout();
     }).then(function(){
       return AppPot.LocalAuthenticator.login(

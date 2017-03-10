@@ -117,10 +117,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1484866740) || "unknown";
+	        return (1489155050) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","15"]).join('.') || "unknown";
+	        return (["2","3","16"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -151,6 +151,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	                .send({
 	                message: message,
 	                target: _target
+	            })
+	                .end(ajax_1.Ajax.end(resolve, reject));
+	        });
+	    };
+	    AppPot.prototype.sendMail = function (sendingRouteName, mailFrom, mailTo, mailCc, mailBcc, subject, body) {
+	        var _this = this;
+	        if (!this._authInfo.hasToken()) {
+	            return es6_promise_1.Promise.reject('not logined');
+	        }
+	        if (!(mailTo instanceof Array) ||
+	            !(mailCc instanceof Array) ||
+	            !(mailBcc instanceof Array)) {
+	            return es6_promise_1.Promise.reject('mailTo, mailCc, mailBcc must be array');
+	        }
+	        if (mailTo.length == 0 && mailCc.length == 0 && mailBcc.length == 0) {
+	            return es6_promise_1.Promise.reject('destination address is not specified');
+	        }
+	        return new es6_promise_1.Promise(function (resolve, reject) {
+	            _this._ajax.post('emails')
+	                .send({
+	                mailFrom: mailFrom,
+	                mailTo: mailTo,
+	                mailCc: mailCc,
+	                mailBcc: mailBcc,
+	                sendingRouteName: sendingRouteName,
+	                subject: subject,
+	                body: body
 	            })
 	                .end(ajax_1.Ajax.end(resolve, reject));
 	        });
@@ -19421,6 +19448,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Role = exports.Role;
 	var GroupsRoles = (function () {
 	    function GroupsRoles(args) {
+	        if (args instanceof GroupsRoles) {
+	            return args;
+	        }
 	        //restore
 	        if (args._groupId && args._groupName && args._roleId) {
 	            this._groupId = args._groupId;
@@ -19430,14 +19460,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (args.group && args.role) {
 	            this._groupId = args.group.groupId;
-	            this._roleId = Role[this._roleNameToRoleId(args.role.roleName)];
+	            this._roleId = this._roleNameToRoleId(args.role.roleName);
 	            this._groupName = args.group.groupName;
 	        }
 	        if (args.groupId) {
 	            this._groupId = args.groupId;
 	        }
 	        if (args.roleName && !this._roleId) {
-	            this._roleId = Role[this._roleNameToRoleId(args.roleName)];
+	            this._roleId = this._roleNameToRoleId(args.roleName);
 	        }
 	        if (args.role && !this._roleId) {
 	            this._roleId = args.role;
