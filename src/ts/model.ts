@@ -583,7 +583,7 @@ export namespace Model {
 
     private _post(){
       const func = (resolve, reject) => {
-          this._ajax.post(`data/${this._class.className}`)
+          this._ajax.post(`data/query/${this._class.className}`)
             .send(this._queryObj)
             .end(Ajax.end(resolve, (err)=>{
               if(err.response && err.response.statusCode == 404){

@@ -117,10 +117,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1489559299) || "unknown";
+	        return (1489600604) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","16"]).join('.') || "unknown";
+	        return (["2","3","18"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -4283,7 +4283,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        Query.prototype._post = function () {
 	            var _this = this;
 	            var func = function (resolve, reject) {
-	                _this._ajax.post("data/" + _this._class.className)
+	                _this._ajax.post("data/query/" + _this._class.className)
 	                    .send(_this._queryObj)
 	                    .end(ajax_1.Ajax.end(resolve, function (err) {
 	                    if (err.response && err.response.statusCode == 404) {
@@ -19482,6 +19482,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (args.groupName) {
 	            this._groupName = args.groupName;
 	        }
+	        if (args.description) {
+	            this._description = args.description;
+	        }
 	    }
 	    GroupsRoles.prototype._roleNameToRoleId = function (name) {
 	        switch (name) {
@@ -19513,6 +19516,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Object.defineProperty(GroupsRoles.prototype, "role", {
 	        get: function () {
 	            return this._roleId;
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    Object.defineProperty(GroupsRoles.prototype, "description", {
+	        get: function () {
+	            return this._description;
 	        },
 	        enumerable: true,
 	        configurable: true

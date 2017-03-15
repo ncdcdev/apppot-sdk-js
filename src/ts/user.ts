@@ -180,6 +180,7 @@ export class GroupsRoles {
   private _groupId;
   private _roleId;
   private _groupName;
+  private _description;
   constructor(args){
     if(args instanceof GroupsRoles){
       return args;
@@ -208,6 +209,9 @@ export class GroupsRoles {
     if(args.groupName){
       this._groupName = args.groupName;
     }
+    if(args.description){
+      this._description = args.description;
+    }
   }
 
   _roleNameToRoleId(name){
@@ -235,6 +239,10 @@ export class GroupsRoles {
 
   get role(){
     return this._roleId;
+  }
+
+  get description(){
+    return this._description;
   }
 
   get roleName(){

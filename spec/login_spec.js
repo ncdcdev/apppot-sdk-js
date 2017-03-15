@@ -17,6 +17,18 @@ describe('loginのテスト', function(){
     });
   });
 
+  it('ログイン後、GroupsRolesの各種情報が取得できる', function(done){
+    AppPot.LocalAuthenticator.login(account.username, account.password)
+    .then(function(){
+      var user = AppPot.getUser();
+      expect(user.groupsRoles[0].groupId).toEqual(202)
+      expect(user.groupsRoles[0].groupName).toEqual('group001')
+      expect(user.groupsRoles[0].description).toEqual('oyp00vbye9jsnnzr')
+      expect(user.groupsRoles[0].roleName).toEqual('Admin')
+      done();
+    });
+  });
+
   it('間違ったid/passの組み合わせでログインが失敗する', function(done){
     AppPot.LocalAuthenticator.login(account.username, 'wrongpassword')
     .catch(function(error){

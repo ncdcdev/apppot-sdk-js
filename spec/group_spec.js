@@ -82,6 +82,7 @@ describe('Group管理APIのテスト', function(){
 
   it('グループの情報を更新できる', function(done){
     var updatedDescription = randomString(16);
+    var beforeDescription;
     AppPot.Group.list()
       .then(function(groups){
         var targetGroup = null;
@@ -92,13 +93,22 @@ describe('Group管理APIのテスト', function(){
           }
         });
         expect(targetGroup).not.toBeNull();
+        beforeDescription = targetGroup.description;
         return targetGroup.update({
           description: updatedDescription
         });
       })
       .then(function(group){
         expect(group.description).toEqual(updatedDescription);
+        // tearDownのために最初のdescriptionに戻す。
+        return group.update({
+          description: beforeDescription
+        });
+      })
+      .then(function(group){
+        expect(group.description).toEqual(beforeDescription);
         done();
       });
+
   });
 });
