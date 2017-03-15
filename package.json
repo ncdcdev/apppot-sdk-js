@@ -1,6 +1,6 @@
 {
   "name": "apppot-sdk",
-  "version": "2.3.16",
+  "version": "2.3.17",
   "description": "",
   "main": "dist/apppot.js",
   "scripts": {

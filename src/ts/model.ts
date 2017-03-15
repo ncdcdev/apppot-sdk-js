@@ -418,6 +418,7 @@ export namespace Model {
     private _queryObj: any;
     private _class;
     private _ajax: Ajax;
+    private _keyClassMap;
 
     constructor(appPot:AppPot, classObj, alias?:string){
       this._class = classObj;
@@ -432,6 +433,8 @@ export namespace Model {
       }else{
         this._queryObj['from']['alias'] = this._class.className;
       }
+      this._keyClassMap = {};
+      this._keyClassMap[ this._queryObj['from']['alias'] ] = this._class.className;
     }
 
     private normalizeExpression(args){
@@ -472,9 +475,15 @@ export namespace Model {
     }
 
     join(modelClass, ...args){
-      let joinType:number;
+      let joinType:number = JoinType.LeftInner;
+      let alias:string = modelClass.className;
       if(typeof args[0] == 'number'){
         joinType = args.shift();
+      }
+      if(typeof args[0] == 'object'){
+        let opts = args.shift();
+        alias = opts.alias ? opts.alias : alias;
+        joinType = opts.joinType ? opts.joinType : joinType;
       }
       let joinStr = 'LEFT JOIN';
       switch(joinType){
@@ -492,9 +501,10 @@ export namespace Model {
       this._queryObj['join'].push({
         type: joinStr,
         entity: modelClass.className,
-        entityAlias: modelClass.className,
+        entityAlias: alias,
         expression: exp.getQuery()
       });
+      this._keyClassMap[alias] = modelClass.className;
       return this;
     }
 
@@ -543,11 +553,12 @@ export namespace Model {
       return this._post()
         .then((obj) => {
           let ret = {};
-          Object.keys(obj).forEach((key) => {
-            if(key == this._class.className){
-              ret[key] = new this._class(obj[key][0]);
-            }else{
-              ret[key] = createModelInstance(key, obj[key][0]);
+          Object.keys(this._keyClassMap).forEach(key => {
+            const className = this._keyClassMap[key];
+            if(obj[key]){
+              ret[key] = createModelInstance(className, obj[key][0]);
+            }else{//指定したaliasでなく、classNameがkey名だった場合
+              ret[key] = createModelInstance(className, obj[className][0]);
             }
           });
           return ret;
@@ -558,15 +569,13 @@ export namespace Model {
       return this._post()
         .then((obj) => {
           let ret = {};
-          Object.keys(obj).forEach((key) => {
+          Object.keys(this._keyClassMap).forEach(key => {
             ret[key] = [];
-            obj[key].forEach((valval, idx) => {
-              if(key == this._class.className){
-                ret[key].push(new this._class(valval));
-              }else{
-                ret[key].push(createModelInstance(key, valval));
-              }
-            })
+            const className = this._keyClassMap[key];
+            const models = obj[key] ? obj[key] : obj[className];
+            models.forEach((valval, idx) => {
+              ret[key].push( createModelInstance(className, valval) );
+            });
           });
           return ret;
         });

@@ -117,7 +117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1489155050) || "unknown";
+	        return (1489559299) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
 	        return (["2","3","16"]).join('.') || "unknown";
@@ -4118,6 +4118,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            else {
 	                this._queryObj['from']['alias'] = this._class.className;
 	            }
+	            this._keyClassMap = {};
+	            this._keyClassMap[this._queryObj['from']['alias']] = this._class.className;
 	        }
 	        Query.prototype.normalizeExpression = function (args) {
 	            if (args.length >= 2) {
@@ -4165,9 +4167,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            for (var _i = 1; _i < arguments.length; _i++) {
 	                args[_i - 1] = arguments[_i];
 	            }
-	            var joinType;
+	            var joinType = JoinType.LeftInner;
+	            var alias = modelClass.className;
 	            if (typeof args[0] == 'number') {
 	                joinType = args.shift();
+	            }
+	            if (typeof args[0] == 'object') {
+	                var opts = args.shift();
+	                alias = opts.alias ? opts.alias : alias;
+	                joinType = opts.joinType ? opts.joinType : joinType;
 	            }
 	            var joinStr = 'LEFT JOIN';
 	            switch (joinType) {
@@ -4185,9 +4193,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this._queryObj['join'].push({
 	                type: joinStr,
 	                entity: modelClass.className,
-	                entityAlias: modelClass.className,
+	                entityAlias: alias,
 	                expression: exp.getQuery()
 	            });
+	            this._keyClassMap[alias] = modelClass.className;
 	            return this;
 	        };
 	        Query.prototype.orderBy = function () {
@@ -4243,12 +4252,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return this._post()
 	                .then(function (obj) {
 	                var ret = {};
-	                Object.keys(obj).forEach(function (key) {
-	                    if (key == _this._class.className) {
-	                        ret[key] = new _this._class(obj[key][0]);
+	                Object.keys(_this._keyClassMap).forEach(function (key) {
+	                    var className = _this._keyClassMap[key];
+	                    if (obj[key]) {
+	                        ret[key] = createModelInstance(className, obj[key][0]);
 	                    }
 	                    else {
-	                        ret[key] = createModelInstance(key, obj[key][0]);
+	                        ret[key] = createModelInstance(className, obj[className][0]);
 	                    }
 	                });
 	                return ret;
@@ -4259,15 +4269,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return this._post()
 	                .then(function (obj) {
 	                var ret = {};
-	                Object.keys(obj).forEach(function (key) {
+	                Object.keys(_this._keyClassMap).forEach(function (key) {
 	                    ret[key] = [];
-	                    obj[key].forEach(function (valval, idx) {
-	                        if (key == _this._class.className) {
-	                            ret[key].push(new _this._class(valval));
-	                        }
-	                        else {
-	                            ret[key].push(createModelInstance(key, valval));
-	                        }
+	                    var className = _this._keyClassMap[key];
+	                    var models = obj[key] ? obj[key] : obj[className];
+	                    models.forEach(function (valval, idx) {
+	                        ret[key].push(createModelInstance(className, valval));
 	                    });
 	                });
 	                return ret;

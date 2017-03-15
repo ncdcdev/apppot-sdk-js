@@ -137,6 +137,26 @@ describe('複数取得のテスト', function(){
     });
   });
 
+  it('joinでaliasを指定できる', function(done){
+    var self = this;
+    var limitCondition = 5;
+    TaskModel.select()
+    .join(PlaceModel, {alias:'p'}, '#p.objectId = #Task.placeId')
+    .where('#Task.limit <= ?', limitCondition)
+    .findList()
+    .then(function(models){
+      expect(models instanceof Object).toBeTruthy();
+      expect(models['Task'] instanceof Array).toBeTruthy();
+      expect(models['Task'].length).toBe(limitCondition);
+      expect(models['p'] instanceof Array).toBeTruthy();
+      expect(models['p'].length).toBe(limitCondition);
+      for(var i = 0; i < limitCondition; i++){
+        expect(models['Task'][i].get('placeId')).toBe(models['p'][i].get('objectId'));
+      }
+      done();
+    });
+  });
+
   it('orderByを使用し、整列されたレコードを取得できる(順序未指定)', function(done){
     var self = this;
     TaskModel.select()
