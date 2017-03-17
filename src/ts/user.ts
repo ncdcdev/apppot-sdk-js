@@ -97,6 +97,19 @@ export function getUserClass(appPot:AppPot){
       }
     }
 
+    static findById(userId, options?: AjaxOptions){
+      if(!this._isNumber(userId)){
+        return Promise.reject('userId is not a number');
+      }
+      return new Promise((resolve, reject) => {
+        appPot.getAjax().get(`users/${userId}`, options)
+          .query({ token: appPot.getAuthInfo().getToken() })
+          .end(Ajax.end((res) => {
+            resolve(new User(res['user']));
+          }, reject));
+      });
+    }
+
     static list(params, options?: AjaxOptions){
       let _params = {};
       if(this._isNumber(params)){

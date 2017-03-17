@@ -7,6 +7,7 @@ window.AppPot = AppPotSDK.getService({
 });
 
 window.account = {
+  userId: 205,
   username: 'user001',
   password: 'aaaa'
 };

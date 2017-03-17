@@ -57,6 +57,17 @@ describe('User管理APIのテスト', function(){
     });
   });
 
+  it('ユーザーIDで取得できる', function(done){
+    var groupId = AppPot.getUser().groupsRoles[0].groupId;
+    AppPot.User.findById(account.userId)
+      .then(function(user){
+        expect(user instanceof AppPot.User).toBeTruthy();
+        expect(user.account).toEqual(account.username);
+        expect(user.groupsRoles instanceof Array).toBeTruthy();
+        done();
+      });
+  });
+
   it('ユーザー一覧を取得できる', function(done){
     var groupId = AppPot.getUser().groupsRoles[0].groupId;
     AppPot.User.list(groupId)
