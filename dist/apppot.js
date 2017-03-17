@@ -117,10 +117,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1489724538) || "unknown";
+	        return (1489745186) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","18"]).join('.') || "unknown";
+	        return (["2","3","20"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -3748,12 +3748,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })(Model.Order || (Model.Order = {}));
 	    var Order = Model.Order;
 	    var classList = {};
-	    function createModelInstance(className, columns) {
+	    function createModelInstance(className, columns, classObj) {
+	        var _class = classObj ? classObj : classList[className];
 	        if (columns) {
-	            return new classList[className](columns);
+	            return new _class(columns);
 	        }
 	        else {
-	            return new classList[className]();
+	            return new _class();
 	        }
 	    }
 	    var modelMethods = [
@@ -4261,11 +4262,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var ret = {};
 	                Object.keys(_this._keyClassMap).forEach(function (key) {
 	                    var className = _this._keyClassMap[key];
+	                    var classObj = false;
+	                    if (className == _this._class.className) {
+	                        classObj = _this._class;
+	                    }
 	                    if (obj[key]) {
-	                        ret[key] = createModelInstance(className, obj[key][0]);
+	                        ret[key] = createModelInstance(className, obj[key][0], classObj);
 	                    }
 	                    else {
-	                        ret[key] = createModelInstance(className, obj[className][0]);
+	                        ret[key] = createModelInstance(className, obj[className][0], classObj);
 	                    }
 	                });
 	                return ret;
@@ -4279,9 +4284,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                Object.keys(_this._keyClassMap).forEach(function (key) {
 	                    ret[key] = [];
 	                    var className = _this._keyClassMap[key];
+	                    var classObj = false;
+	                    if (className == _this._class.className) {
+	                        classObj = _this._class;
+	                    }
 	                    var models = obj[key] ? obj[key] : obj[className];
 	                    models.forEach(function (valval, idx) {
-	                        ret[key].push(createModelInstance(className, valval));
+	                        ret[key].push(createModelInstance(className, valval, classObj));
 	                    });
 	                });
 	                return ret;

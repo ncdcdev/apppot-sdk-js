@@ -59,11 +59,12 @@ export namespace Model {
 
   let classList = {};
 
-  function createModelInstance(className, columns?:any[]){
+  function createModelInstance(className, columns?:any[], classObj?){
+    const _class = classObj ? classObj : classList[className];
     if(columns){
-      return new classList[className](columns);
+      return new _class(columns);
     }else{
-      return new classList[className]();
+      return new _class();
     }
   }
 
@@ -555,10 +556,14 @@ export namespace Model {
           let ret = {};
           Object.keys(this._keyClassMap).forEach(key => {
             const className = this._keyClassMap[key];
+            let classObj = false;
+            if(className == this._class.className){
+              classObj = this._class;
+            }
             if(obj[key]){
-              ret[key] = createModelInstance(className, obj[key][0]);
+              ret[key] = createModelInstance(className, obj[key][0], classObj);
             }else{//指定したaliasでなく、classNameがkey名だった場合
-              ret[key] = createModelInstance(className, obj[className][0]);
+              ret[key] = createModelInstance(className, obj[className][0], classObj);
             }
           });
           return ret;
@@ -572,9 +577,13 @@ export namespace Model {
           Object.keys(this._keyClassMap).forEach(key => {
             ret[key] = [];
             const className = this._keyClassMap[key];
+            let classObj = false;
+            if(className == this._class.className){
+              classObj = this._class;
+            }
             const models = obj[key] ? obj[key] : obj[className];
             models.forEach((valval, idx) => {
-              ret[key].push( createModelInstance(className, valval) );
+              ret[key].push( createModelInstance(className, valval, classObj) );
             });
           });
           return ret;
