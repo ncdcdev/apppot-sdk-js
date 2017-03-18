@@ -183,15 +183,15 @@ export function getUserClass(appPot:AppPot){
 }
 
 export enum Role {
-  SuperAdmin,
-  Admin,
-  Manager,
-  User
+  SuperAdmin = 2,
+  Admin = 3,
+  Manager = 4,
+  User = 5
 }
 
 export class GroupsRoles {
   private _groupId;
-  private _roleId;
+  private _roleName;
   private _groupName;
   private _description;
   constructor(args){
@@ -199,25 +199,29 @@ export class GroupsRoles {
       return args;
     }
     //restore
-    if(args._groupId && args._groupName && args._roleId){
+    if(args._groupId && args._groupName && args._roleName){
       this._groupId = args._groupId;
       this._groupName = args._groupName;
-      this._roleId = args._roleId;
+      this._roleName = args._roleName;
       return this;
     }
     if(args.group && args.role){
       this._groupId = args.group.groupId;
-      this._roleId = this._roleNameToRoleId(args.role.roleName);
+      this._roleName = args.role.roleName;
       this._groupName = args.group.groupName;
     }
     if(args.groupId){
       this._groupId = args.groupId;
     }
-    if(args.roleName && !this._roleId){
-      this._roleId = this._roleNameToRoleId(args.roleName);
+    if(args.roleName && !this._roleName){
+      this._roleName = args.roleName;
     }
-    if(args.role && !this._roleId){
-      this._roleId = args.role;
+    if(args.role && !this._roleName){
+      console.log('[WARN] roleId or Role enumerator will be can no longer be specify to create GroupsRoles Instance.');
+      this._roleName = Role[args.role];
+      if(this._roleName == 'SuperAdmin'){
+        this._roleName = 'Super Admin';
+      }
     }
     if(args.groupName){
       this._groupName = args.groupName;
@@ -227,18 +231,9 @@ export class GroupsRoles {
     }
   }
 
-  _roleNameToRoleId(name){
-    switch(name){
-      case 'Super Admin':
-        return +Role.SuperAdmin;
-      default:
-        return +Role[name];
-    }
-  }
-
   setGroupsRoles(obj){
     this._groupId = obj.group.groupId;
-    this._roleId = Role[obj.role.roleName];
+    this._roleName = obj.role.roleName;
     return this;
   }
 
@@ -251,7 +246,12 @@ export class GroupsRoles {
   }
 
   get role(){
-    return this._roleId;
+    console.log('[WARN] roleId or Role enumerator will be can no longer be use.');
+    let roleName = this._roleName;
+    if(roleName == 'Super Admin'){
+      roleName = 'SuperAdmin';
+    }
+    return Role[roleName];
   }
 
   get description(){
@@ -259,10 +259,7 @@ export class GroupsRoles {
   }
 
   get roleName(){
-    switch(this._roleId){
-      default:
-        return Role[this._roleId];
-    }
+    return this._roleName;
   }
 
   getGroupsRolesForUserAPI(){

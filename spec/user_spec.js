@@ -33,10 +33,16 @@ describe('User管理APIのテスト', function(){
       firstName: 'test',
       lastName: 'account',
       password: 'wohafdslkj',
-      groupsRoles: new AppPot.GroupsRoles({
-        groupId: gr.groupId,
-        role: AppPot.Role.User
-      })
+      groupsRoles: [
+        new AppPot.GroupsRoles({
+          groupId: gr.groupId,
+          role: AppPot.Role.User
+        }),
+        new AppPot.GroupsRoles({
+          groupId: gr.groupId,
+          roleName: 'Admin'
+        }),
+      ]
     });
 
 
@@ -46,7 +52,11 @@ describe('User管理APIのテスト', function(){
       expect(user.groupsRoles[0] instanceof AppPot.GroupsRoles).toBeTruthy();
       expect(user.groupsRoles[0].groupId).toEqual(gr.groupId);
       expect(user.groupsRoles[0].groupName).toEqual(gr.groupName);
-      expect(user.groupsRoles[0].role).toEqual(3);
+      expect(user.groupsRoles[0].roleName).toEqual('User');
+      expect(user.groupsRoles[1] instanceof AppPot.GroupsRoles).toBeTruthy();
+      expect(user.groupsRoles[1].groupId).toEqual(gr.groupId);
+      expect(user.groupsRoles[1].groupName).toEqual(gr.groupName);
+      expect(user.groupsRoles[1].role).toEqual(AppPot.Role.Admin);
       return AppPot.LocalAuthenticator.logout();
     }).then(function(){
       return AppPot.LocalAuthenticator.login(
