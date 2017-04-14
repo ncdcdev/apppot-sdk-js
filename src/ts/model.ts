@@ -4,6 +4,7 @@ import {Error} from './error';
 import {AppPot} from './apppot';
 import * as moment from 'moment';
 import {Promise} from 'es6-promise';
+import {Database} from './database';
 const objectAssign = require('object-assign');
 
 export namespace Model {
@@ -110,6 +111,59 @@ export namespace Model {
         }
       }
 
+      static saveToLocal(...args){
+        let query = classList[_className].select();
+        if(args.length != 0){
+          query = query.where(args);
+        }
+        return query.findList()
+          .then(result => {
+            return classList[_className].insertAll2Local(result[_className]);
+          })
+      }
+
+      static insertAll2Local(objects: ModelClass[] | Object[]){
+        return new Promise( ( resolve, reject ) => {
+          const db = appPot.getLocalDatabase();
+          let { columns, models } = classList[_className]._normalizeColumns(objects);
+
+          const createTable = Database.getSqliteTableDefinition(classList[_className]);
+
+          const colNames = Object.keys(columns[0]);
+          const placeHolders = colNames.map( _ => {
+            return '?'
+          }).join(',');
+          const records = columns.map( (record, idx) => {
+            return colNames.map( key => {
+              if( key == 'objectId' && ( record[key] === null||record[key] === undefined ) ){
+                const id = `${_className}_${appPot.uuid()}`;
+                models[idx].set('objectId', id);
+                return id;
+              }
+              return record[key];
+            });
+          });
+
+          if(!db){
+            reject('Local Database is undefined');
+          }
+          db.transaction((tx)=>{
+            console.log(createTable);
+            tx.executeSql(createTable);
+            records.forEach( record => {
+              const query = `INSERT INTO ${_className} ( ${colNames.join(',')} ) VALUES ( ${placeHolders} )`;
+              console.log(query);
+              console.log( JSON.stringify( record ) );
+              tx.executeSql(query, record);
+            });
+          }, (error) => {
+            reject(error);
+          }, () => {
+            resolve(models);
+          });
+        });
+      }
+
       static _rawInsert(formatedColumns: Object[]){
           return new Promise((resolve, reject)=>{
             appPot.getAjax().post(`data/batch/addData`)//${_className}`)
@@ -121,7 +175,7 @@ export namespace Model {
           });
       }
 
-      static insertAll(objects: ModelClass[] | Object[]){
+      static _normalizeColumns(objects: ModelClass[] | Object[]){
         let _columns;
         let _models;
         if(objects[0] instanceof ModelClass){
@@ -132,19 +186,26 @@ export namespace Model {
         }else{
           _columns = objects;
           _models = _columns.map((column) => {
-            const model =  new this(column);
+            const model =  new (this||classList[_className])(column);
             return model;
           });
         }
-        const _formatedColumns = _models.map((_model) => {
-          return classList[_className].formatColumns(_model.get(), true);
-        });
-        return classList[_className]._rawInsert(_formatedColumns)
+        return {
+          columns: _models.map((_model) => {
+            return classList[_className].formatColumns(_model.get(), true);
+          }),
+          models: _models
+        }
+      }
+
+      static insertAll(objects: ModelClass[] | Object[]){
+        let { columns, models } = classList[_className]._normalizeColumns(objects);
+        return classList[_className]._rawInsert(columns)
           .then((obj)=>{
             obj['results'].forEach((val, idx) => {
-              _models[idx].set(val);
+              models[idx].set(val);
             });
-            return _models;
+            return models;
           });
       }
 
@@ -162,7 +223,7 @@ export namespace Model {
               _formatedColumns[0],
               obj['results'][0]
             );
-            return new this(createdColumns);
+            return new (this||classList[_className])(createdColumns);
           });
       }
 
@@ -170,7 +231,7 @@ export namespace Model {
         const func = (resolve, reject) => {
            appPot.getAjax().get(`data/${_className}/${id}`)
              .end(Ajax.end((obj) => {
-               const inst = new this(obj[_className][0]);
+               const inst = new (this||classList[_className])(obj[_className][0]);
                resolve(inst);
              }, reject));
         };
@@ -185,7 +246,7 @@ export namespace Model {
         if(alias){
           alias = alias.replace(/^#+/, '');
         }
-        return new Query(appPot, this, alias);
+        return new Query(appPot, this||classList[_className], alias);
       }
 
       isNew(){

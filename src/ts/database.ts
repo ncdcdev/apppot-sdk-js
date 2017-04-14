@@ -16,6 +16,13 @@ export class Database {
     return Database._createAppData(appPot, models, false);
   }
 
+  static createLocalTable(appPot: AppPot, model){
+    const {table, errors} = Database.getTableDefinition(model);
+    if(errors.length != 0){
+      return;
+    }
+  }
+
   /*checkDatabase(){
     return new Promise((resolve, reject) => {
       this._ajax.get('schemas')
@@ -62,6 +69,16 @@ export class Database {
     };
   }
 
+  static mapType2SqliteType(type){
+    switch(type){
+      case 'varchar':
+        return 'TEXT';
+      case 'integer':
+      case 'long':
+        return 'NUMERIC';
+    }
+  }
+
   private static _buildColumnItem(name, col){
     let column = {
       colName: name,
@@ -86,24 +103,56 @@ export class Database {
     return column;
   }
 
+  static getSqliteTableDefinition(model){
+    const {table, errors} = Database.getTableDefinition(model);
+    if(errors.length != 0){
+      throw new Error(-1, errors.join('\n'));
+    }
+    const name = table.name;
+    const pk = table.primary_key;
+    let columns = table.columns.map(column => {
+      if(column.colName == pk){
+        return `${column.colName} ${Database.mapType2SqliteType(column.type)} PRIMARY KEY`
+      }else{
+        return `${column.colName} ${Database.mapType2SqliteType(column.type)}`
+      }
+    });
+    columns.push('serverCreateTime TEXT');
+    columns.push('serverUpdateTime TEXT');
+    columns.push('_removed INTEGER DEFAULT 0');
+    columns.push('_updated INTEGER DEFAULT 0');
+    return `CREATE TABLE IF NOT EXISTS ${name} ( ${columns.join(',')} );`;
+  }
+
+  static getTableDefinition(model){
+    let errors = [];
+    let cols = model.modelColumns;
+    let tableName = model.className;
+    if(!tableName){
+      throw new Error(-1, 'table name is Required');
+    }
+    let table = Database._makeDefaultTable(tableName);
+    for(let name in cols){
+      if(name == 'objectId'){
+        errors.push(`invalid column name: ${tableName}.${name}`);
+        continue;
+      }
+      table.columns.push(Database._buildColumnItem(name, cols[name]));
+    }
+    return {table, errors}
+  }
+
   private static _createAppData(appPot, models, reset){
     let tables = [];
     let errors = [];
     for(let idx in models){
-      let cols = models[idx].modelColumns;
-      let tableName = models[idx].className;
-      if(!tableName){
-        return Promise.reject(new Error(-1, 'table name is Required'));
+      try {
+        const {table, errors:e} = Database.getTableDefinition(models[idx]);
+        errors = errors.concat(e);
+        tables.push(table);
+      }catch(e){
+        return Promise.reject(e);
       }
-      let table = Database._makeDefaultTable(tableName);
-      for(let name in cols){
-        if(name == 'objectId'){
-          errors.push(`invalid column name: ${tableName}.${name}`);
-          continue;
-        }
-        table.columns.push(Database._buildColumnItem(name, cols[name]));
-      }
-      tables.push(table);
     }
     if(errors.length != 0){
       return Promise.reject(new Error(-1, errors.join('\n')));
