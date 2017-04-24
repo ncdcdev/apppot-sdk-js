@@ -117,10 +117,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1489842408) || "unknown";
+	        return (1493003660) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","21"]).join('.') || "unknown";
+	        return (["2","3","22"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -4188,7 +4188,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var joinStr = 'LEFT JOIN';
 	            switch (joinType) {
 	                case JoinType.LeftOuter:
-	                    joinStr = 'LEFT OUTER';
+	                    joinStr = 'LEFT OUTER JOIN';
 	                    break;
 	                case JoinType.LeftInner:
 	                    joinStr = 'LEFT JOIN';

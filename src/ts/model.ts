@@ -489,7 +489,7 @@ export namespace Model {
       let joinStr = 'LEFT JOIN';
       switch(joinType){
         case JoinType.LeftOuter:
-          joinStr = 'LEFT OUTER';
+          joinStr = 'LEFT OUTER JOIN';
           break;
         case JoinType.LeftInner:
           joinStr = 'LEFT JOIN';
