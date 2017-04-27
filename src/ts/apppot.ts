@@ -20,6 +20,7 @@ export class AppPot {
   private _authInfo: AuthInfo;
   private _ajax: Ajax;
   private _inst;
+  private _localDb;
   public User;
   public Group;
   public Model;
@@ -55,6 +56,19 @@ export class AppPot {
     this['Error'] = Error;
     this['Group'] = getGroupClass(this);
   }
+
+  uuid() {
+    let uuid = "";
+    for (let i = 0; i < 32; i++) {
+      let random = Math.random() * 16 | 0;
+      if (i == 8 || i == 12 || i == 16 || i == 20) {
+        uuid += "-"
+      }
+      uuid += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random)).toString(16);
+    }
+    return uuid;
+  }
+
   getAjax(){
     return this._ajax;
   }
@@ -76,6 +90,12 @@ export class AppPot {
   dropAndCreateDatabase(models){
     return Database.dropAndCreateDatabase(this, models);
   }
+  setLocalDatabase(db){
+    this._localDb = db;
+  }
+  getLocalDatabase(){
+    return this._localDb;
+  }
   getBuildDate(){
     return APPPOT_BUILD_UTC || "unknown";
   }
@@ -96,22 +116,26 @@ export class AppPot {
       .end(Ajax.end(resolve, reject));
     });
   }
-  sendPushNotification(message, target){
+  sendPushNotification(message, target, title?){
     if(!this._authInfo.hasToken()){
       return Promise.reject('not logined');
     }
-
     console.log('sending push notification...');
 
     const _target = (target instanceof Array) ? target : [target];
+    let payload = {
+      message: message,
+      target: _target
+    };
+
+    if(title){
+      payload['title'] = title;
+    }
 
     return new Promise((resolve, reject)=>{
       this._ajax
         .post('messages')
-        .send({
-          message: message,
-          target: _target
-        })
+        .send(payload)
         .end(Ajax.end(resolve, reject));
     });
   }
