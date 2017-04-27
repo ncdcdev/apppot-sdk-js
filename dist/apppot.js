@@ -117,10 +117,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1493003660) || "unknown";
+	        return (1493265310) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","22"]).join('.') || "unknown";
+	        return (["2","3","23"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -3740,6 +3740,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    (function (JoinType) {
 	        JoinType[JoinType["LeftInner"] = 1] = "LeftInner";
 	        JoinType[JoinType["LeftOuter"] = 2] = "LeftOuter";
+	        JoinType[JoinType["RightOuter"] = 3] = "RightOuter";
+	        JoinType[JoinType["Inner"] = 4] = "Inner";
 	    })(Model.JoinType || (Model.JoinType = {}));
 	    var JoinType = Model.JoinType;
 	    (function (Order) {
@@ -4192,6 +4194,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    break;
 	                case JoinType.LeftInner:
 	                    joinStr = 'LEFT JOIN';
+	                    break;
+	                case JoinType.RightOuter:
+	                    joinStr = 'RIGHT OUTER JOIN';
+	                    break;
+	                case JoinType.Inner:
+	                    joinStr = 'INNER JOIN';
 	                    break;
 	            }
 	            var exp = this.normalizeExpression(args);

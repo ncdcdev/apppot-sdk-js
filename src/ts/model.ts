@@ -49,7 +49,9 @@ export namespace Model {
 
   export enum JoinType {
     LeftInner = 1,
-    LeftOuter = 2
+    LeftOuter = 2,
+    RightOuter = 3,
+    Inner = 4
   }
 
   export enum Order {
@@ -493,6 +495,12 @@ export namespace Model {
           break;
         case JoinType.LeftInner:
           joinStr = 'LEFT JOIN';
+          break;
+        case JoinType.RightOuter:
+          joinStr = 'RIGHT OUTER JOIN';
+          break;
+        case JoinType.Inner:
+          joinStr = 'INNER JOIN';
           break;
       }
       const exp = this.normalizeExpression(args);
