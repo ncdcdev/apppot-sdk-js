@@ -112,9 +112,9 @@ export class Database {
     const pk = table.primary_key;
     let columns = table.columns.map(column => {
       if(column.colName == pk){
-        return `${column.colName} ${Database.mapType2SqliteType(column.type)} PRIMARY KEY`
+        return `\`${column.colName}\` ${Database.mapType2SqliteType(column.type)} PRIMARY KEY`
       }else{
-        return `${column.colName} ${Database.mapType2SqliteType(column.type)}`
+        return `\`${column.colName}\` ${Database.mapType2SqliteType(column.type)}`
       }
     });
     columns.push('serverCreateTime TEXT');

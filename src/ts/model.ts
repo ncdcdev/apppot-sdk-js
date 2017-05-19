@@ -5,6 +5,7 @@ import {AppPot} from './apppot';
 import * as moment from 'moment';
 import {Promise} from 'es6-promise';
 import {Database} from './database';
+import SqliteClauseTranslator from './sqlite-clause-translator.ts';
 const objectAssign = require('object-assign');
 
 export namespace Model {
@@ -113,6 +114,7 @@ export namespace Model {
         }
       }
 
+      /* ローカル系 メソッド */
       static saveToLocal(...args){
         let query = classList[_className].select();
         if(args.length != 0){
@@ -120,50 +122,83 @@ export namespace Model {
         }
         return query.findList()
           .then(result => {
-            return classList[_className].insertAll2Local(result[_className]);
+            return classList[_className].insertAllLocal(result[_className]);
           })
       }
 
-      static insertAll2Local(objects: ModelClass[] | Object[]){
-        return new Promise( ( resolve, reject ) => {
-          const db = appPot.getLocalDatabase();
-          let { columns, models } = classList[_className]._normalizeColumns(objects);
+      static findAllLocal(){
+        return classList[_className].selectLocal().findList();
+      }
 
-          const createTable = Database.getSqliteTableDefinition(classList[_className]);
+      static findByIdLocal(id:string){
+        return classList[_className].selectLocal()
+          .where('objectId = ?', id)
+          .findOne();
+      }
 
-          const colNames = Object.keys(columns[0]);
-          const placeHolders = colNames.map( _ => {
-            return '?'
-          }).join(',');
-          const records = columns.map( (record, idx) => {
-            return colNames.map( key => {
-              if( key == 'objectId' && ( record[key] === null||record[key] === undefined ) ){
-                const id = `${_className}_${appPot.uuid()}`;
-                models[idx].set('objectId', id);
-                return id;
-              }
-              return record[key];
-            });
+      static insertLocal(data: Object){
+        return classList[_className].insertAllLocal([data])
+          .then(models => models[0]);
+      }
+
+      static insertAllLocal(objects: ModelClass[] | Object[]){
+
+        let { columns, models } = classList[_className]._normalizeColumns(objects);
+        const colNames = Object.keys(columns[0]).map(colName => {
+          return colName
+        });
+        const placeHolders = colNames.map( _ => {
+          return '?'
+        }).join(',');
+        console.log(columns);
+        console.log(models);
+        const records = columns.map( (record, idx) => {
+          return colNames.map( key => {
+            if( key == 'objectId' && ( record[key] === null||record[key] === undefined ) ){
+              const id = `${_className}_${appPot.uuid()}`;
+              models[idx].set('objectId', id);
+              console.log('assign objectId: '+id);
+              return id;
+            }
+            return record[key];
           });
+        });
 
+        return new Promise( ( resolve, reject ) => {
+
+          const db = appPot.getLocalDatabase();
           if(!db){
             reject('Local Database is undefined');
           }
+
+          const createTable = Database.getSqliteTableDefinition(classList[_className]);
+
+
           db.transaction((tx)=>{
             console.log(createTable);
             tx.executeSql(createTable);
             records.forEach( record => {
-              const query = `INSERT INTO ${_className} ( ${colNames.join(',')} ) VALUES ( ${placeHolders} )`;
+              const escapedColNames = colNames.map(name => "`"+name+"`");
+              const query = `INSERT INTO ${_className} ( ${escapedColNames.join(',')} ) VALUES ( ${placeHolders} )`;
               console.log(query);
-              console.log( JSON.stringify( record ) );
+              console.log(record);
+              //console.log( JSON.stringify( record ) );
               tx.executeSql(query, record);
             });
           }, (error) => {
             reject(error);
           }, () => {
+            console.log('success');
             resolve(models);
           });
         });
+      }
+
+      static selectLocal(alias?:string){
+        if(alias){
+          alias = alias.replace(/^#+/, '');
+        }
+        return new Query(appPot, this||classList[_className], alias, appPot.getLocalDatabase());
       }
 
       static _rawInsert(formatedColumns: Object[]){
@@ -483,14 +518,16 @@ export namespace Model {
     private _class;
     private _ajax: Ajax;
     private _keyClassMap;
+    private _localDB: any;
 
-    constructor(appPot:AppPot, classObj, alias?:string){
+    constructor(appPot:AppPot, classObj, alias?:string, localDB?:any){
       this._class = classObj;
       this._queryObj = {
         'from': {
           'phyName': this._class.className
         }
       };
+      this._localDB = localDB || false;
       this._ajax = appPot.getAjax();
       if(alias){
         this._queryObj['from']['alias'] = alias;
@@ -620,6 +657,16 @@ export namespace Model {
         limit: 1,
         offset: 1
       };
+      if(this._localDB){
+        return this._queryToLocal()
+          .then( result => {
+            let returnResult = {};
+            Object.keys(result).forEach( alias => {
+              returnResult[alias] = result[alias][0];
+            });
+            return returnResult;
+          });
+      }
       return this._post()
         .then((obj) => {
           let ret = {};
@@ -640,6 +687,10 @@ export namespace Model {
     }
 
     findList(){
+      if(this._localDB){
+        return this._queryToLocal();
+          
+      }
       return this._post()
         .then((obj) => {
           let ret = {};
@@ -657,6 +708,60 @@ export namespace Model {
           });
           return ret;
         });
+    }
+
+    private _queryToLocal(){
+      console.log('_queryToLocal');
+      return (new Promise( (resolve, reject) => {
+        const queryObj = (new SqliteClauseTranslator()).translate( this._queryObj, this._keyClassMap, classList);
+        if(!this._localDB){
+          reject('Local Database is undefined');
+        }
+        this._localDB.transaction((tx)=>{
+          console.log(queryObj.query);
+          console.log(queryObj.params);
+          tx.executeSql(queryObj.query, queryObj.params, (...args) => {
+            console.log('callback 2');
+            console.log(args);
+            let returnArray = [];
+            for(var i = 0; i < args[1].rows.length; i++){
+              returnArray.push(args[1].rows.item(i));
+            }
+            console.log(returnArray);
+            resolve(returnArray);
+          }, (...args) => {
+            console.log('callback 1');
+            console.log(args);
+            reject(args[0].message);
+          });
+        });
+      })).then( (records:Object[]) => {
+        let preReturnObject = {};
+        Object.keys(this._keyClassMap).forEach( alias => {
+          preReturnObject[alias] = [];
+        });
+        records.forEach( (record, idx) => {
+          Object.keys(record).forEach( colName => {
+            const matches = colName.match(/(.*)____(.*)/);
+            console.log(matches);
+            const alias = matches[1];
+            const trueColName = matches[2];
+            if(!preReturnObject[alias][idx]){
+              preReturnObject[alias][idx] = {};
+            };
+            preReturnObject[alias][idx][trueColName] = record[colName];
+          });
+        });
+        console.log(preReturnObject);
+        let returnObject = {};
+        Object.keys(preReturnObject).forEach( alias => {
+          returnObject[alias] = preReturnObject[alias].map( record => {
+            return createModelInstance( this._keyClassMap[alias], record );
+          });
+        });
+        console.log(returnObject);
+        return returnObject;
+      });
     }
 
     private _post(){

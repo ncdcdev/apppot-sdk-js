@@ -62,10 +62,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var local_authenticator_1 = __webpack_require__(12);
 	var database_1 = __webpack_require__(16);
 	var model_1 = __webpack_require__(18);
-	var device_1 = __webpack_require__(130);
-	var user_1 = __webpack_require__(131);
-	var group_1 = __webpack_require__(132);
-	var file_1 = __webpack_require__(133);
+	var device_1 = __webpack_require__(131);
+	var user_1 = __webpack_require__(132);
+	var group_1 = __webpack_require__(133);
+	var file_1 = __webpack_require__(134);
 	var types_1 = __webpack_require__(17);
 	var error_1 = __webpack_require__(11);
 	var es6_promise_1 = __webpack_require__(13);
@@ -95,6 +95,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this['Error'] = error_1.Error;
 	        this['Group'] = group_1.getGroupClass(this);
 	    }
+	    AppPot.prototype.uuid = function () {
+	        var uuid = "";
+	        for (var i = 0; i < 32; i++) {
+	            var random = Math.random() * 16 | 0;
+	            if (i == 8 || i == 12 || i == 16 || i == 20) {
+	                uuid += "-";
+	            }
+	            uuid += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random)).toString(16);
+	        }
+	        return uuid;
+	    };
 	    AppPot.prototype.getAjax = function () {
 	        return this._ajax;
 	    };
@@ -116,8 +127,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    AppPot.prototype.dropAndCreateDatabase = function (models) {
 	        return database_1.Database.dropAndCreateDatabase(this, models);
 	    };
+	    AppPot.prototype.setLocalDatabase = function (db) {
+	        this._localDb = db;
+	    };
+	    AppPot.prototype.getLocalDatabase = function () {
+	        return this._localDb;
+	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1493265310) || "unknown";
+	        return (1495200095) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
 	        return (["2","3","23"]).join('.') || "unknown";
@@ -138,20 +155,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	                .end(ajax_1.Ajax.end(resolve, reject));
 	        });
 	    };
-	    AppPot.prototype.sendPushNotification = function (message, target) {
+	    AppPot.prototype.sendPushNotification = function (message, target, title) {
 	        var _this = this;
 	        if (!this._authInfo.hasToken()) {
 	            return es6_promise_1.Promise.reject('not logined');
 	        }
 	        console.log('sending push notification...');
 	        var _target = (target instanceof Array) ? target : [target];
+	        var payload = {
+	            message: message,
+	            target: _target
+	        };
+	        if (title) {
+	            payload['title'] = title;
+	        }
 	        return new es6_promise_1.Promise(function (resolve, reject) {
 	            _this._ajax
 	                .post('messages')
-	                .send({
-	                message: message,
-	                target: _target
-	            })
+	                .send(payload)
 	                .end(ajax_1.Ajax.end(resolve, reject));
 	        });
 	    };
@@ -3560,6 +3581,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Database.createDatabase = function (appPot, models) {
 	        return Database._createAppData(appPot, models, false);
 	    };
+	    Database.createLocalTable = function (appPot, model) {
+	        var _a = Database.getTableDefinition(model), table = _a.table, errors = _a.errors;
+	        if (errors.length != 0) {
+	            return;
+	        }
+	    };
 	    /*checkDatabase(){
 	      return new Promise((resolve, reject) => {
 	        this._ajax.get('schemas')
@@ -3604,6 +3631,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            ]
 	        };
 	    };
+	    Database.mapType2SqliteType = function (type) {
+	        switch (type) {
+	            case 'varchar':
+	                return 'TEXT';
+	            case 'integer':
+	            case 'long':
+	                return 'NUMERIC';
+	        }
+	    };
 	    Database._buildColumnItem = function (name, col) {
 	        var column = {
 	            colName: name,
@@ -3627,24 +3663,56 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return column;
 	    };
+	    Database.getSqliteTableDefinition = function (model) {
+	        var _a = Database.getTableDefinition(model), table = _a.table, errors = _a.errors;
+	        if (errors.length != 0) {
+	            throw new error_1.Error(-1, errors.join('\n'));
+	        }
+	        var name = table.name;
+	        var pk = table.primary_key;
+	        var columns = table.columns.map(function (column) {
+	            if (column.colName == pk) {
+	                return "`" + column.colName + "` " + Database.mapType2SqliteType(column.type) + " PRIMARY KEY";
+	            }
+	            else {
+	                return "`" + column.colName + "` " + Database.mapType2SqliteType(column.type);
+	            }
+	        });
+	        columns.push('serverCreateTime TEXT');
+	        columns.push('serverUpdateTime TEXT');
+	        columns.push('_removed INTEGER DEFAULT 0');
+	        columns.push('_updated INTEGER DEFAULT 0');
+	        return "CREATE TABLE IF NOT EXISTS " + name + " ( " + columns.join(',') + " );";
+	    };
+	    Database.getTableDefinition = function (model) {
+	        var errors = [];
+	        var cols = model.modelColumns;
+	        var tableName = model.className;
+	        if (!tableName) {
+	            throw new error_1.Error(-1, 'table name is Required');
+	        }
+	        var table = Database._makeDefaultTable(tableName);
+	        for (var name_1 in cols) {
+	            if (name_1 == 'objectId') {
+	                errors.push("invalid column name: " + tableName + "." + name_1);
+	                continue;
+	            }
+	            table.columns.push(Database._buildColumnItem(name_1, cols[name_1]));
+	        }
+	        return { table: table, errors: errors };
+	    };
 	    Database._createAppData = function (appPot, models, reset) {
 	        var tables = [];
 	        var errors = [];
 	        for (var idx in models) {
-	            var cols = models[idx].modelColumns;
-	            var tableName = models[idx].className;
-	            if (!tableName) {
-	                return es6_promise_1.Promise.reject(new error_1.Error(-1, 'table name is Required'));
+	            try {
+	                var _a = Database.getTableDefinition(models[idx]), table = _a.table, e = _a.errors;
+	                errors = errors.concat(e);
+	                tables.push(table);
 	            }
-	            var table = Database._makeDefaultTable(tableName);
-	            for (var name_1 in cols) {
-	                if (name_1 == 'objectId') {
-	                    errors.push("invalid column name: " + tableName + "." + name_1);
-	                    continue;
-	                }
-	                table.columns.push(Database._buildColumnItem(name_1, cols[name_1]));
+	            catch (e) {
+	                return es6_promise_1.Promise.reject(e);
 	            }
-	            tables.push(table);
 	        }
 	        if (errors.length != 0) {
 	            return es6_promise_1.Promise.reject(new error_1.Error(-1, errors.join('\n')));
@@ -3693,6 +3761,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var error_1 = __webpack_require__(11);
 	var moment = __webpack_require__(19);
 	var es6_promise_1 = __webpack_require__(13);
+	var database_1 = __webpack_require__(16);
+	var sqlite_clause_translator_ts_1 = __webpack_require__(130);
 	var objectAssign = __webpack_require__(3);
 	var Model;
 	(function (Model) {
@@ -3794,6 +3864,85 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    this.set(columns);
 	                }
 	            }
+	            /* ローカル系 メソッド */
+	            ModelClass.saveToLocal = function () {
+	                var args = [];
+	                for (var _i = 0; _i < arguments.length; _i++) {
+	                    args[_i - 0] = arguments[_i];
+	                }
+	                var query = classList[_className].select();
+	                if (args.length != 0) {
+	                    query = query.where(args);
+	                }
+	                return query.findList()
+	                    .then(function (result) {
+	                    return classList[_className].insertAllLocal(result[_className]);
+	                });
+	            };
+	            ModelClass.findAllLocal = function () {
+	                return classList[_className].selectLocal().findList();
+	            };
+	            ModelClass.findByIdLocal = function (id) {
+	                return classList[_className].selectLocal()
+	                    .where('objectId = ?', id)
+	                    .findOne();
+	            };
+	            ModelClass.insertLocal = function (data) {
+	                return classList[_className].insertAllLocal([data])
+	                    .then(function (models) { return models[0]; });
+	            };
+	            ModelClass.insertAllLocal = function (objects) {
+	                var _a = classList[_className]._normalizeColumns(objects), columns = _a.columns, models = _a.models;
+	                var colNames = Object.keys(columns[0]).map(function (colName) {
+	                    return colName;
+	                });
+	                var placeHolders = colNames.map(function (_) {
+	                    return '?';
+	                }).join(',');
+	                console.log(columns);
+	                console.log(models);
+	                var records = columns.map(function (record, idx) {
+	                    return colNames.map(function (key) {
+	                        if (key == 'objectId' && (record[key] === null || record[key] === undefined)) {
+	                            var id = _className + "_" + appPot.uuid();
+	                            models[idx].set('objectId', id);
+	                            console.log('assign objectId: ' + id);
+	                            return id;
+	                        }
+	                        return record[key];
+	                    });
+	                });
+	                return new es6_promise_1.Promise(function (resolve, reject) {
+	                    var db = appPot.getLocalDatabase();
+	                    if (!db) {
+	                        reject('Local Database is undefined');
+	                    }
+	                    var createTable = database_1.Database.getSqliteTableDefinition(classList[_className]);
+	                    db.transaction(function (tx) {
+	                        console.log(createTable);
+	                        tx.executeSql(createTable);
+	                        records.forEach(function (record) {
+	                            var escapedColNames = colNames.map(function (name) { return "`" + name + "`"; });
+	                            var query = "INSERT INTO " + _className + " ( " + escapedColNames.join(',') + " ) VALUES ( " + placeHolders + " )";
+	                            console.log(query);
+	                            console.log(record);
+	                            //console.log( JSON.stringify( record ) );
+	                            tx.executeSql(query, record);
+	                        });
+	                    }, function (error) {
+	                        reject(error);
+	                    }, function () {
+	                        console.log('success');
+	                        resolve(models);
+	                    });
+	                });
+	            };
+	            ModelClass.selectLocal = function (alias) {
+	                if (alias) {
+	                    alias = alias.replace(/^#+/, '');
+	                }
+	                return new Query(appPot, this || classList[_className], alias, appPot.getLocalDatabase());
+	            };
 	            ModelClass._rawInsert = function (formatedColumns) {
 	                return new es6_promise_1.Promise(function (resolve, reject) {
 	                    appPot.getAjax().post("data/batch/addData") //${_className}`)
@@ -3804,7 +3953,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        .end(ajax_1.Ajax.end(resolve, reject));
 	                });
 	            };
-	            ModelClass.insertAll = function (objects) {
+	            ModelClass._normalizeColumns = function (objects) {
 	                var _this = this;
 	                var _columns;
 	                var _models;
@@ -3817,19 +3966,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	                else {
 	                    _columns = objects;
 	                    _models = _columns.map(function (column) {
-	                        var model = new _this(column);
+	                        var model = new (_this || classList[_className])(column);
 	                        return model;
 	                    });
 	                }
-	                var _formatedColumns = _models.map(function (_model) {
-	                    return classList[_className].formatColumns(_model.get(), true);
-	                });
-	                return classList[_className]._rawInsert(_formatedColumns)
+	                return {
+	                    columns: _models.map(function (_model) {
+	                        return classList[_className].formatColumns(_model.get(), true);
+	                    }),
+	                    models: _models
+	                };
+	            };
+	            ModelClass.insertAll = function (objects) {
+	                var _a = classList[_className]._normalizeColumns(objects), columns = _a.columns, models = _a.models;
+	                return classList[_className]._rawInsert(columns)
 	                    .then(function (obj) {
 	                    obj['results'].forEach(function (val, idx) {
-	                        _models[idx].set(val);
+	                        models[idx].set(val);
 	                    });
-	                    return _models;
+	                    return models;
 	                });
 	            };
 	            ModelClass.insert = function (data) {
@@ -3842,7 +3997,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    .then(function (obj) {
 	                    var ret = [];
 	                    var createdColumns = objectAssign({}, _formatedColumns[0], obj['results'][0]);
-	                    return new _this(createdColumns);
+	                    return new (_this || classList[_className])(createdColumns);
 	                });
 	            };
 	            ModelClass.findById = function (id) {
@@ -3850,7 +4005,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var func = function (resolve, reject) {
 	                    appPot.getAjax().get("data/" + _className + "/" + id)
 	                        .end(ajax_1.Ajax.end(function (obj) {
-	                        var inst = new _this(obj[_className][0]);
+	                        var inst = new (_this || classList[_className])(obj[_className][0]);
 	                        resolve(inst);
 	                    }, reject));
 	                };
@@ -3863,7 +4018,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (alias) {
 	                    alias = alias.replace(/^#+/, '');
 	                }
-	                return new Query(appPot, this, alias);
+	                return new Query(appPot, this || classList[_className], alias);
 	            };
 	            ModelClass.prototype.isNew = function () {
 	                return !this._columns['objectId'];
@@ -4114,13 +4269,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    Model.define = define;
 	    var Query = (function () {
-	        function Query(appPot, classObj, alias) {
+	        function Query(appPot, classObj, alias, localDB) {
 	            this._class = classObj;
 	            this._queryObj = {
 	                'from': {
 	                    'phyName': this._class.className
 	                }
 	            };
+	            this._localDB = localDB || false;
 	            this._ajax = appPot.getAjax();
 	            if (alias) {
 	                this._queryObj['from']['alias'] = alias;
@@ -4265,6 +4421,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	                limit: 1,
 	                offset: 1
 	            };
+	            if (this._localDB) {
+	                return this._queryToLocal()
+	                    .then(function (result) {
+	                    var returnResult = {};
+	                    Object.keys(result).forEach(function (alias) {
+	                        returnResult[alias] = result[alias][0];
+	                    });
+	                    return returnResult;
+	                });
+	            }
 	            return this._post()
 	                .then(function (obj) {
 	                var ret = {};
@@ -4286,6 +4452,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	        Query.prototype.findList = function () {
 	            var _this = this;
+	            if (this._localDB) {
+	                return this._queryToLocal();
+	            }
 	            return this._post()
 	                .then(function (obj) {
 	                var ret = {};
@@ -4302,6 +4471,69 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    });
 	                });
 	                return ret;
+	            });
+	        };
+	        Query.prototype._queryToLocal = function () {
+	            var _this = this;
+	            console.log('_queryToLocal');
+	            return (new es6_promise_1.Promise(function (resolve, reject) {
+	                var queryObj = (new sqlite_clause_translator_ts_1.default()).translate(_this._queryObj, _this._keyClassMap, classList);
+	                if (!_this._localDB) {
+	                    reject('Local Database is undefined');
+	                }
+	                _this._localDB.transaction(function (tx) {
+	                    console.log(queryObj.query);
+	                    console.log(queryObj.params);
+	                    tx.executeSql(queryObj.query, queryObj.params, function () {
+	                        var args = [];
+	                        for (var _i = 0; _i < arguments.length; _i++) {
+	                            args[_i - 0] = arguments[_i];
+	                        }
+	                        console.log('callback 2');
+	                        console.log(args);
+	                        var returnArray = [];
+	                        for (var i = 0; i < args[1].rows.length; i++) {
+	                            returnArray.push(args[1].rows.item(i));
+	                        }
+	                        console.log(returnArray);
+	                        resolve(returnArray);
+	                    }, function () {
+	                        var args = [];
+	                        for (var _i = 0; _i < arguments.length; _i++) {
+	                            args[_i - 0] = arguments[_i];
+	                        }
+	                        console.log('callback 1');
+	                        console.log(args);
+	                        reject(args[0].message);
+	                    });
+	                });
+	            })).then(function (records) {
+	                var preReturnObject = {};
+	                Object.keys(_this._keyClassMap).forEach(function (alias) {
+	                    preReturnObject[alias] = [];
+	                });
+	                records.forEach(function (record, idx) {
+	                    Object.keys(record).forEach(function (colName) {
+	                        var matches = colName.match(/(.*)____(.*)/);
+	                        console.log(matches);
+	                        var alias = matches[1];
+	                        var trueColName = matches[2];
+	                        if (!preReturnObject[alias][idx]) {
+	                            preReturnObject[alias][idx] = {};
+	                        }
+	                        ;
+	                        preReturnObject[alias][idx][trueColName] = record[colName];
+	                    });
+	                });
+	                console.log(preReturnObject);
+	                var returnObject = {};
+	                Object.keys(preReturnObject).forEach(function (alias) {
+	                    returnObject[alias] = preReturnObject[alias].map(function (record) {
+	                        return createModelInstance(_this._keyClassMap[alias], record);
+	                    });
+	                });
+	                console.log(returnObject);
+	                return returnObject;
 	            });
 	        };
 	        Query.prototype._post = function () {
@@ -19240,6 +19472,89 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	"use strict";
+	var SqliteClauseTranslator = (function () {
+	    function SqliteClauseTranslator() {
+	        this._params = [];
+	    }
+	    SqliteClauseTranslator.prototype.translate = function (queryObj, keyClassMap, classList) {
+	        console.log(queryObj);
+	        this._keyClassMap = keyClassMap;
+	        this._classList = classList;
+	        var sql = this.selectFromJoin(queryObj) + ' ' +
+	            this.where(queryObj) + ' ' +
+	            this.order(queryObj) + ' ' +
+	            this.limit(queryObj);
+	        return {
+	            query: sql,
+	            params: this._params
+	        };
+	    };
+	    SqliteClauseTranslator.prototype.getClass = function (alias) {
+	        return this._classList[this._keyClassMap[alias]];
+	    };
+	    SqliteClauseTranslator.prototype.expression = function (source, params) {
+	        this._params = this._params.concat(params);
+	        return source.replace('#', '');
+	    };
+	    SqliteClauseTranslator.prototype.limit = function (queryObj) {
+	        if (!queryObj.range) {
+	            return '';
+	        }
+	        var limit = queryObj.range;
+	        return "LIMIT " + limit.limit + " OFFSET " + (limit.offset - 1);
+	    };
+	    SqliteClauseTranslator.prototype.order = function (queryObj) {
+	        if (!queryObj.orderBy || queryObj.orderBy.length == 0) {
+	            return '';
+	        }
+	        var orderBys = queryObj['orderBy'];
+	        return 'order by ' + orderBys.map(function (orderBy) {
+	            return orderBy['column'] + " " + orderBy['type'];
+	        }).join(',');
+	    };
+	    SqliteClauseTranslator.prototype.where = function (queryObj) {
+	        var exp = queryObj['where']['expression'];
+	        return 'WHERE ' + this.expression(exp.source, exp.params);
+	    };
+	    SqliteClauseTranslator.prototype.selectFromJoin = function (queryObj) {
+	        var _this = this;
+	        var mainTableAlias = queryObj['from']['alias'];
+	        var mainTableClass = this.getClass(mainTableAlias);
+	        var select = Object.keys(mainTableClass.modelColumns).map(function (col) {
+	            return "`" + mainTableAlias + "`.`" + col + "` AS " + mainTableAlias + "____" + col;
+	        });
+	        var from = "FROM " + queryObj['from']['phyName'];
+	        if (queryObj['from']['phyName'] != queryObj['from']['alias']) {
+	            from += " AS " + queryObj['from']['alias'];
+	        }
+	        if (queryObj.join && queryObj.join.length > 0) {
+	            queryObj.join.forEach(function (joinObj) {
+	                var alias = joinObj.entityAlias;
+	                from += joinObj.type + " " + joinObj.entity;
+	                if (joinObj.entity != alias) {
+	                    from += " AS " + alias;
+	                }
+	                var expression = _this.expression(joinObj.expression.source, joinObj.expression.params);
+	                from += " ON " + expression + " ";
+	                var joinColumns = Object.keys(_this.getClass(alias).modelColumns).map(function (col) {
+	                    return "`" + alias + "`.`" + col + "` AS " + alias + "____" + col;
+	                });
+	                select = select.concat(joinColumns);
+	            });
+	        }
+	        return "SELECT " + select.join(',') + " " + from;
+	    };
+	    return SqliteClauseTranslator;
+	}());
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = SqliteClauseTranslator;
+
+
+/***/ },
+/* 131 */
+/***/ function(module, exports) {
+
+	"use strict";
 	var Device = (function () {
 	    function Device(args) {
 	        var _this = this;
@@ -19290,7 +19605,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 131 */
+/* 132 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -19587,7 +19902,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 132 */
+/* 133 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -19695,7 +20010,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 133 */
+/* 134 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
