@@ -78,6 +78,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._config = new config_1.Config(props);
 	        this._authInfo = new auth_info_1.AuthInfo(this);
 	        this._ajax = new ajax_1.Ajax(this._config, this._authInfo);
+	        this._isOnline = true;
 	        var authenticators = {
 	            "LocalAuthenticator": local_authenticator_1.LocalAuthenticator
 	        };
@@ -134,7 +135,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._localDb;
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1495200095) || "unknown";
+	        return (1496828967) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
 	        return (["2","3","23"]).join('.') || "unknown";
@@ -175,6 +176,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                .send(payload)
 	                .end(ajax_1.Ajax.end(resolve, reject));
 	        });
+	    };
+	    AppPot.prototype.isOnline = function () {
+	        return this._isOnline;
+	    };
+	    AppPot.prototype.online = function (isOnline) {
+	        this._isOnline = isOnline;
 	    };
 	    AppPot.prototype.sendMail = function (sendingRouteName, mailFrom, mailTo, mailCc, mailBcc, subject, body) {
 	        var _this = this;
@@ -3627,7 +3634,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                {
 	                    'colName': 'updateTime',
 	                    'type': 'long'
-	                }
+	                },
 	            ]
 	        };
 	    };
@@ -3680,9 +3687,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	        columns.push('serverCreateTime TEXT');
 	        columns.push('serverUpdateTime TEXT');
-	        columns.push('_removed INTEGER DEFAULT 0');
-	        columns.push('_updated INTEGER DEFAULT 0');
-	        return "CREATE TABLE IF NOT EXISTS " + name + " ( " + columns.join(',') + " );";
+	        return [
+	            ("CREATE TABLE IF NOT EXISTS " + name + " ( " + columns.join(',') + " );"),
+	            ("CREATE TABLE IF NOT EXISTS apppot_" + name + "_queue ( `type` TEXT, `id` TEXT PRIMARY KEY);")
+	        ];
 	    };
 	    Database.getTableDefinition = function (model) {
 	        var errors = [];
@@ -3756,6 +3764,11 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
 	var types_1 = __webpack_require__(17);
 	var ajax_1 = __webpack_require__(4);
 	var error_1 = __webpack_require__(11);
@@ -3851,10 +3864,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                Object.keys(modelColumns).forEach(function (key) {
 	                    Object.defineProperty(_this, key, {
 	                        get: function () {
-	                            return this._columns[key];
+	                            return this.get(key);
 	                        },
 	                        set: function (value) {
-	                            this._columns[key] = value;
+	                            this.set(key, value);
 	                        },
 	                        enumerable: true,
 	                        configurable: true
@@ -3864,49 +3877,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    this.set(columns);
 	                }
 	            }
-	            /* ローカル系 メソッド */
-	            ModelClass.saveToLocal = function () {
-	                var args = [];
-	                for (var _i = 0; _i < arguments.length; _i++) {
-	                    args[_i - 0] = arguments[_i];
-	                }
-	                var query = classList[_className].select();
-	                if (args.length != 0) {
-	                    query = query.where(args);
-	                }
-	                return query.findList()
-	                    .then(function (result) {
-	                    return classList[_className].insertAllLocal(result[_className]);
-	                });
-	            };
-	            ModelClass.findAllLocal = function () {
-	                return classList[_className].selectLocal().findList();
-	            };
-	            ModelClass.findByIdLocal = function (id) {
-	                return classList[_className].selectLocal()
-	                    .where('objectId = ?', id)
-	                    .findOne();
-	            };
-	            ModelClass.insertLocal = function (data) {
-	                return classList[_className].insertAllLocal([data])
-	                    .then(function (models) { return models[0]; });
-	            };
-	            ModelClass.insertAllLocal = function (objects) {
-	                var _a = classList[_className]._normalizeColumns(objects), columns = _a.columns, models = _a.models;
-	                var colNames = Object.keys(columns[0]).map(function (colName) {
+	            ModelClass._getColumnsPlaceholders = function (includeDates) {
+	                var colNames = Object.keys(classList[_className].filterDefinedColumnOnly({})).map(function (colName) {
 	                    return colName;
 	                });
-	                var placeHolders = colNames.map(function (_) {
+	                var placeholders = colNames.map(function (_) {
 	                    return '?';
-	                }).join(',');
-	                console.log(columns);
-	                console.log(models);
+	                });
+	                return {
+	                    colNames: colNames,
+	                    placeholders: placeholders
+	                };
+	            };
+	            ModelClass._insertAllLocal = function (objects) {
+	                var _a = classList[_className]._normalizeColumns(objects), columns = _a.columns, models = _a.models;
+	                var _b = classList[_className]._getColumnsPlaceholders(), colNames = _b.colNames, placeholders = _b.placeholders;
+	                var objectIds = [];
 	                var records = columns.map(function (record, idx) {
 	                    return colNames.map(function (key) {
 	                        if (key == 'objectId' && (record[key] === null || record[key] === undefined)) {
 	                            var id = _className + "_" + appPot.uuid();
 	                            models[idx].set('objectId', id);
-	                            console.log('assign objectId: ' + id);
+	                            objectIds[idx] = id;
 	                            return id;
 	                        }
 	                        return record[key];
@@ -3917,17 +3909,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    if (!db) {
 	                        reject('Local Database is undefined');
 	                    }
-	                    var createTable = database_1.Database.getSqliteTableDefinition(classList[_className]);
+	                    var createTables = database_1.Database.getSqliteTableDefinition(classList[_className]);
 	                    db.transaction(function (tx) {
-	                        console.log(createTable);
-	                        tx.executeSql(createTable);
-	                        records.forEach(function (record) {
+	                        createTables.forEach(function (table) {
+	                            tx.executeSql(table);
+	                        });
+	                        records.forEach(function (record, idx) {
 	                            var escapedColNames = colNames.map(function (name) { return "`" + name + "`"; });
-	                            var query = "INSERT INTO " + _className + " ( " + escapedColNames.join(',') + " ) VALUES ( " + placeHolders + " )";
+	                            var query = "INSERT INTO " + _className + " ( " + escapedColNames.join(',') + " ) VALUES ( " + placeholders.join(',') + " )";
 	                            console.log(query);
-	                            console.log(record);
-	                            //console.log( JSON.stringify( record ) );
-	                            tx.executeSql(query, record);
+	                            console.log(JSON.stringify(record));
+	                            tx.executeSql(query, record, function () {
+	                                var query = "INSERT INTO " + sqlite_clause_translator_ts_1.default.getQueueTableName(_className) + " ( `type`, `id` ) VALUES ( ?, ? )";
+	                                var params = ['created', objectIds[idx]];
+	                                console.log(query);
+	                                console.log(JSON.stringify(params));
+	                                tx.executeSql(query, params);
+	                            });
 	                        });
 	                    }, function (error) {
 	                        reject(error);
@@ -3937,47 +3935,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    });
 	                });
 	            };
-	            ModelClass.selectLocal = function (alias) {
-	                if (alias) {
-	                    alias = alias.replace(/^#+/, '');
-	                }
-	                return new Query(appPot, this || classList[_className], alias, appPot.getLocalDatabase());
-	            };
-	            ModelClass._rawInsert = function (formatedColumns) {
-	                return new es6_promise_1.Promise(function (resolve, reject) {
-	                    appPot.getAjax().post("data/batch/addData") //${_className}`)
-	                        .send({
-	                        objectName: _className,
-	                        data: formatedColumns
-	                    })
-	                        .end(ajax_1.Ajax.end(resolve, reject));
-	                });
-	            };
-	            ModelClass._normalizeColumns = function (objects) {
-	                var _this = this;
-	                var _columns;
-	                var _models;
-	                if (objects[0] instanceof ModelClass) {
-	                    _models = objects;
-	                    _columns = _models.map(function (model) {
-	                        return model.get();
-	                    });
-	                }
-	                else {
-	                    _columns = objects;
-	                    _models = _columns.map(function (column) {
-	                        var model = new (_this || classList[_className])(column);
-	                        return model;
-	                    });
-	                }
-	                return {
-	                    columns: _models.map(function (_model) {
-	                        return classList[_className].formatColumns(_model.get(), true);
-	                    }),
-	                    models: _models
-	                };
-	            };
-	            ModelClass.insertAll = function (objects) {
+	            ModelClass._insertAll = function (objects) {
 	                var _a = classList[_className]._normalizeColumns(objects), columns = _a.columns, models = _a.models;
 	                return classList[_className]._rawInsert(columns)
 	                    .then(function (obj) {
@@ -3987,7 +3945,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    return models;
 	                });
 	            };
-	            ModelClass.insert = function (data) {
+	            ModelClass.insertAll = function (objects) {
+	                if (appPot.isOnline()) {
+	                    return classList[_className]._insertAll(objects);
+	                }
+	                else {
+	                    return classList[_className]._insertAllLocal(objects);
+	                }
+	            };
+	            ModelClass._insertLocal = function (data) {
+	                return classList[_className]._insertAllLocal([data])
+	                    .then(function (models) { return models[0]; });
+	            };
+	            ModelClass._insert = function (data) {
 	                var _this = this;
 	                if (data instanceof Array) {
 	                    throw 'invalid argument type: use insertAll';
@@ -4000,7 +3970,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    return new (_this || classList[_className])(createdColumns);
 	                });
 	            };
-	            ModelClass.findById = function (id) {
+	            ModelClass.insert = function (data) {
+	                if (appPot.isOnline()) {
+	                    return classList[_className]._insert(data);
+	                }
+	                else {
+	                    return classList[_className]._insertLocal(data);
+	                }
+	            };
+	            ModelClass._findByIdLocal = function (id) {
+	                console.log('findbyidlocal id: ' + id);
+	                return classList[_className]._selectLocal()
+	                    .where('objectId = ?', id)
+	                    .findOne()
+	                    .then(function (obj) {
+	                    console.log('findbyidlocal');
+	                    console.log(obj);
+	                    if (!obj[_className]) {
+	                        return es6_promise_1.Promise.reject('not found');
+	                    }
+	                    return obj[_className];
+	                });
+	            };
+	            ModelClass._findById = function (id) {
 	                var _this = this;
 	                var func = function (resolve, reject) {
 	                    appPot.getAjax().get("data/" + _className + "/" + id)
@@ -4011,17 +4003,315 @@ return /******/ (function(modules) { // webpackBootstrap
 	                };
 	                return new es6_promise_1.Promise(func);
 	            };
-	            ModelClass.findAll = function () {
+	            ModelClass.findById = function (id) {
+	                if (appPot.isOnline()) {
+	                    return classList[_className]._findById(id);
+	                }
+	                else {
+	                    return classList[_className]._findByIdLocal(id);
+	                }
+	            };
+	            ModelClass._findAllLocal = function () {
+	                return classList[_className]._selectLocal().findList();
+	            };
+	            ModelClass._findAll = function () {
 	                return classList[_className].select().findList();
 	            };
-	            ModelClass.select = function (alias) {
+	            ModelClass.findAll = function () {
+	                if (appPot.isOnline()) {
+	                    return classList[_className]._findAll();
+	                }
+	                else {
+	                    return classList[_className]._findAllLocal();
+	                }
+	            };
+	            ModelClass._selectLocal = function (alias) {
+	                if (alias) {
+	                    alias = alias.replace(/^#+/, '');
+	                }
+	                return new Query(appPot, this || classList[_className], alias, appPot.getLocalDatabase());
+	            };
+	            ModelClass._select = function (alias) {
 	                if (alias) {
 	                    alias = alias.replace(/^#+/, '');
 	                }
 	                return new Query(appPot, this || classList[_className], alias);
 	            };
+	            ModelClass.select = function (alias) {
+	                if (appPot.isOnline()) {
+	                    return classList[_className]._select(alias);
+	                }
+	                else {
+	                    return classList[_className]._selectLocal(alias);
+	                }
+	            };
+	            ModelClass.prototype._insertLocal = function () {
+	                var _this = this;
+	                var args = [];
+	                for (var _i = 0; _i < arguments.length; _i++) {
+	                    args[_i - 0] = arguments[_i];
+	                }
+	                this.set.apply(this, args);
+	                if (!this.isNew()) {
+	                    return es6_promise_1.Promise.reject(new error_1.Error(-1, 'object is created'));
+	                }
+	                return classList[_className]
+	                    ._insertLocal(this.get())
+	                    .then(function () {
+	                    return _this;
+	                });
+	            };
+	            ModelClass.prototype._insert = function () {
+	                var _this = this;
+	                var args = [];
+	                for (var _i = 0; _i < arguments.length; _i++) {
+	                    args[_i - 0] = arguments[_i];
+	                }
+	                this.set.apply(this, args);
+	                if (!this.isNew()) {
+	                    return es6_promise_1.Promise.reject(new error_1.Error(-1, 'object is created'));
+	                }
+	                var func = function (resolve, reject) {
+	                    var columns = classList[_className].formatColumns(_this._columns, true);
+	                    appPot.getAjax().post("data/batch/addData")
+	                        .send({
+	                        objectName: _className,
+	                        data: [columns]
+	                    })
+	                        .end(ajax_1.Ajax.end(function (obj) {
+	                        resolve(_this.set(obj['results'][0]));
+	                    }, reject));
+	                };
+	                return new es6_promise_1.Promise(func);
+	            };
+	            ModelClass.prototype.insert = function () {
+	                var args = [];
+	                for (var _i = 0; _i < arguments.length; _i++) {
+	                    args[_i - 0] = arguments[_i];
+	                }
+	                if (appPot.isOnline()) {
+	                    return this._insert.apply(this, args);
+	                }
+	                else {
+	                    return this._insertLocal.apply(this, args);
+	                }
+	            };
+	            ModelClass.prototype._updateLocal = function () {
+	                var _this = this;
+	                var args = [];
+	                for (var _i = 0; _i < arguments.length; _i++) {
+	                    args[_i - 0] = arguments[_i];
+	                }
+	                if (this.isNew()) {
+	                    return es6_promise_1.Promise.reject(new error_1.Error(-1, 'object is not created'));
+	                }
+	                this.set.apply(this, args);
+	                var columns = classList[_className].formatColumns(this._columns, false);
+	                var queryObj = (new sqlite_clause_translator_ts_1.default()).translateUpdate(_className, columns['objectId'], columns);
+	                return new es6_promise_1.Promise(function (resolve, reject) {
+	                    var db = appPot.getLocalDatabase();
+	                    db.transaction(function (tx) {
+	                        console.log(queryObj.query);
+	                        console.log(queryObj.params);
+	                        tx.executeSql(queryObj.query, queryObj.params, function () {
+	                            var args = [];
+	                            for (var _i = 0; _i < arguments.length; _i++) {
+	                                args[_i - 0] = arguments[_i];
+	                            }
+	                            var query = "INSERT OR IGNORE INTO " + sqlite_clause_translator_ts_1.default.getQueueTableName(_className) + " ( `type`, `id` ) VALUES ( ?, ? )";
+	                            var params = ['updated', columns['objectId']];
+	                            console.log(query);
+	                            console.log(JSON.stringify(params));
+	                            tx.executeSql(query, params);
+	                        });
+	                    }, function (error) {
+	                        reject(error);
+	                    }, function () {
+	                        console.log('success');
+	                        resolve(_this);
+	                    });
+	                });
+	            };
+	            ModelClass.prototype._update = function () {
+	                var _this = this;
+	                var args = [];
+	                for (var _i = 0; _i < arguments.length; _i++) {
+	                    args[_i - 0] = arguments[_i];
+	                }
+	                if (this.isNew()) {
+	                    return es6_promise_1.Promise.reject(new error_1.Error(-1, 'object is not created'));
+	                }
+	                this.set.apply(this, args);
+	                var func = function (resolve, reject) {
+	                    var columns = classList[_className].formatColumns(_this._columns, false);
+	                    appPot.getAjax().post('data/batch/updateData')
+	                        .send({
+	                        objectName: _className,
+	                        data: [columns]
+	                    })
+	                        .end(ajax_1.Ajax.end(function (obj) {
+	                        _this.set(obj['results'][0]);
+	                        resolve(_this);
+	                    }, reject));
+	                };
+	                return new es6_promise_1.Promise(func);
+	            };
+	            ModelClass.prototype.update = function () {
+	                var args = [];
+	                for (var _i = 0; _i < arguments.length; _i++) {
+	                    args[_i - 0] = arguments[_i];
+	                }
+	                if (appPot.isOnline()) {
+	                    return this._update.apply(this, args);
+	                }
+	                else {
+	                    return this._updateLocal.apply(this, args);
+	                }
+	            };
+	            ModelClass.prototype._saveLocal = function () {
+	                var args = [];
+	                for (var _i = 0; _i < arguments.length; _i++) {
+	                    args[_i - 0] = arguments[_i];
+	                }
+	                if (this.isNew()) {
+	                    return this._insertLocal.apply(this, args);
+	                }
+	                else {
+	                    return this._updateLocal.apply(this, args);
+	                }
+	            };
+	            ModelClass.prototype._save = function () {
+	                var args = [];
+	                for (var _i = 0; _i < arguments.length; _i++) {
+	                    args[_i - 0] = arguments[_i];
+	                }
+	                if (this.isNew()) {
+	                    return this._insert.apply(this, args);
+	                }
+	                else {
+	                    return this._update.apply(this, args);
+	                }
+	            };
+	            ModelClass.prototype.save = function () {
+	                var args = [];
+	                for (var _i = 0; _i < arguments.length; _i++) {
+	                    args[_i - 0] = arguments[_i];
+	                }
+	                if (appPot.isOnline()) {
+	                    return this._save.apply(this, args);
+	                }
+	                else {
+	                    return this._saveLocal.apply(this, args);
+	                }
+	            };
+	            ModelClass.removeById = function (_id) {
+	                return classList[_className].findById(_id).then(function (model) {
+	                    return model.remove();
+	                });
+	            };
+	            ModelClass.prototype._removeLocal = function () {
+	                var _this = this;
+	                return new es6_promise_1.Promise(function (resolve, reject) {
+	                    var db = appPot.getLocalDatabase();
+	                    db.transaction(function (tx) {
+	                        var queryObj = (new sqlite_clause_translator_ts_1.default()).translateDelete(_className, _this.get('objectId'));
+	                        console.log(queryObj.query);
+	                        console.log(queryObj.params);
+	                        tx.executeSql(queryObj.query, queryObj.params);
+	                        var query = "SELECT type FROM " + sqlite_clause_translator_ts_1.default.getQueueTableName(_className) + " WHERE id = ?";
+	                        var params = [_this.get('objectId')];
+	                        console.log(query);
+	                        console.log(params);
+	                        tx.executeSql(query, params, function () {
+	                            var args = [];
+	                            for (var _i = 0; _i < arguments.length; _i++) {
+	                                args[_i - 0] = arguments[_i];
+	                            }
+	                            var query = "INSERT OR REPLACE INTO " + sqlite_clause_translator_ts_1.default.getQueueTableName(_className) + " ( `type`, `id` ) VALUES ( ?, ? )";
+	                            var params = ['deleted', _this.get('objectId')];
+	                            if (args[1].rows.length > 0 && args[1].rows.item(0).type == 'created') {
+	                                query = "DELETE FROM " + sqlite_clause_translator_ts_1.default.getQueueTableName(_className) + " WHERE id = ?";
+	                                params = [_this.get('objectId')];
+	                            }
+	                            console.log(query);
+	                            console.log(params);
+	                            tx.executeSql(query, params);
+	                        });
+	                    }, function (error) {
+	                        console.log('error');
+	                        console.log(error);
+	                        reject(error);
+	                    }, function () {
+	                        console.log('success');
+	                        resolve(true);
+	                    });
+	                });
+	            };
+	            ModelClass.prototype._remove = function () {
+	                var _this = this;
+	                var func = function (resolve, reject) {
+	                    appPot.getAjax().post('data/batch/deleteData')
+	                        .send({
+	                        objectName: _className,
+	                        objectIds: [{
+	                                objectId: _this.get('objectId'),
+	                                serverUpdateTime: moment(_this.get('serverUpdateTime'))
+	                                    .utcOffset(9)
+	                                    .format('YYYY-MM-DDTHH:mm:ss.SSSZ')
+	                            }]
+	                    })
+	                        .end(ajax_1.Ajax.end(resolve, reject));
+	                };
+	                return new es6_promise_1.Promise(func);
+	            };
+	            ModelClass.prototype.remove = function () {
+	                if (appPot.isOnline()) {
+	                    return this._remove.apply(this);
+	                }
+	                else {
+	                    return this._removeLocal.apply(this);
+	                }
+	            };
 	            ModelClass.prototype.isNew = function () {
 	                return !this._columns['objectId'];
+	            };
+	            ModelClass.downlink = function (alias) {
+	                if (!appPot.isOnline()) {
+	                    throw "offline mode";
+	                }
+	                return new QueryLimited(appPot, this || classList[_className], alias)
+	                    .setLocalDatabase(appPot.getLocalDatabase());
+	            };
+	            ModelClass._debug = function () {
+	                var returnArray = [];
+	                return new es6_promise_1.Promise(function (resolve, reject) {
+	                    var db = appPot.getLocalDatabase();
+	                    db.transaction(function (tx) {
+	                        tx.executeSql('SELECT * FROM ' + _className, [], function () {
+	                            var args = [];
+	                            for (var _i = 0; _i < arguments.length; _i++) {
+	                                args[_i - 0] = arguments[_i];
+	                            }
+	                            for (var i = 0; i < args[1].rows.length; i++) {
+	                                returnArray.push(args[1].rows.item(i));
+	                            }
+	                            tx.executeSql('SELECT * FROM ' + sqlite_clause_translator_ts_1.default.getQueueTableName(_className), [], function () {
+	                                var args = [];
+	                                for (var _i = 0; _i < arguments.length; _i++) {
+	                                    args[_i - 0] = arguments[_i];
+	                                }
+	                                for (var i = 0; i < args[1].rows.length; i++) {
+	                                    returnArray.push(args[1].rows.item(i));
+	                                }
+	                            });
+	                        });
+	                    }, function (error) {
+	                        reject(error);
+	                    }, function () {
+	                        console.log('success');
+	                        resolve(returnArray);
+	                    });
+	                });
 	            };
 	            ModelClass.prototype.get = function (colName) {
 	                if (colName) {
@@ -4055,10 +4345,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                Object.keys(this._columns).forEach(function (key) {
 	                    Object.defineProperty(_this, key, {
 	                        get: function () {
-	                            return this._columns[key];
+	                            return this.get(key);
 	                        },
 	                        set: function (value) {
-	                            this._columns[key] = value;
+	                            this.set(key, value);
 	                        },
 	                        enumerable: true,
 	                        configurable: true
@@ -4158,9 +4448,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    _columns['createTime'] = Date.now() / 1000;
 	                }
 	                _columns['updateTime'] = Date.now() / 1000;
-	                return classList[_className].doDefinedColumnOnly(_columns);
+	                return classList[_className].filterDefinedColumnOnly(_columns);
 	            };
-	            ModelClass.doDefinedColumnOnly = function (columns) {
+	            ModelClass.filterDefinedColumnOnly = function (columns) {
 	                var filteredColumns = {};
 	                Object.keys(modelColumns).forEach(function (col) {
 	                    filteredColumns[col] = columns[col];
@@ -4173,86 +4463,39 @@ return /******/ (function(modules) { // webpackBootstrap
 	                filteredColumns['updateTime'] = columns['updateTime'];
 	                return filteredColumns;
 	            };
-	            ModelClass.prototype.insert = function () {
-	                var _this = this;
-	                var args = [];
-	                for (var _i = 0; _i < arguments.length; _i++) {
-	                    args[_i - 0] = arguments[_i];
-	                }
-	                this.set.apply(this, args);
-	                if (!this.isNew()) {
-	                    return es6_promise_1.Promise.reject(new error_1.Error(-1, 'object is created'));
-	                }
-	                var func = function (resolve, reject) {
-	                    var columns = classList[_className].formatColumns(_this._columns, true);
-	                    appPot.getAjax().post("data/batch/addData")
+	            ModelClass._rawInsert = function (formatedColumns) {
+	                return new es6_promise_1.Promise(function (resolve, reject) {
+	                    appPot.getAjax().post("data/batch/addData") //${_className}`)
 	                        .send({
 	                        objectName: _className,
-	                        data: [columns]
-	                    })
-	                        .end(ajax_1.Ajax.end(function (obj) {
-	                        resolve(_this.set(obj['results'][0]));
-	                    }, reject));
-	                };
-	                return new es6_promise_1.Promise(func);
-	            };
-	            ModelClass.prototype.update = function () {
-	                var _this = this;
-	                var args = [];
-	                for (var _i = 0; _i < arguments.length; _i++) {
-	                    args[_i - 0] = arguments[_i];
-	                }
-	                if (this.isNew()) {
-	                    return es6_promise_1.Promise.reject(new error_1.Error(-1, 'object is not created'));
-	                }
-	                this.set.apply(this, args);
-	                var func = function (resolve, reject) {
-	                    var columns = classList[_className].formatColumns(_this._columns, false);
-	                    appPot.getAjax().post('data/batch/updateData')
-	                        .send({
-	                        objectName: _className,
-	                        data: [columns]
-	                    })
-	                        .end(ajax_1.Ajax.end(function (obj) {
-	                        _this.set(obj['results'][0]);
-	                        resolve(_this);
-	                    }, reject));
-	                };
-	                return new es6_promise_1.Promise(func);
-	            };
-	            ModelClass.prototype.save = function () {
-	                var args = [];
-	                for (var _i = 0; _i < arguments.length; _i++) {
-	                    args[_i - 0] = arguments[_i];
-	                }
-	                if (this.isNew()) {
-	                    return this.insert.apply(this, args);
-	                }
-	                else {
-	                    return this.update.apply(this, args);
-	                }
-	            };
-	            ModelClass.removeById = function (_id) {
-	                return classList[_className].findById(_id).then(function (model) {
-	                    return model.remove();
-	                });
-	            };
-	            ModelClass.prototype.remove = function () {
-	                var _this = this;
-	                var func = function (resolve, reject) {
-	                    appPot.getAjax().post('data/batch/deleteData')
-	                        .send({
-	                        objectName: _className,
-	                        objectIds: [{
-	                                objectId: _this.get('objectId'),
-	                                serverUpdateTime: moment(_this.get('serverUpdateTime'))
-	                                    .utcOffset(9)
-	                                    .format('YYYY-MM-DDTHH:mm:ss.SSSZ')
-	                            }]
+	                        data: formatedColumns
 	                    })
 	                        .end(ajax_1.Ajax.end(resolve, reject));
+	                });
+	            };
+	            ModelClass._normalizeColumns = function (objects) {
+	                var _this = this;
+	                var _columns;
+	                var _models;
+	                if (objects[0] instanceof ModelClass) {
+	                    _models = objects;
+	                    _columns = _models.map(function (model) {
+	                        return model.get();
+	                    });
+	                }
+	                else {
+	                    _columns = objects;
+	                    _models = _columns.map(function (column) {
+	                        var model = new (_this || classList[_className])(column);
+	                        return model;
+	                    });
+	                }
+	                return {
+	                    columns: _models.map(function (_model) {
+	                        return classList[_className].formatColumns(_model.get(), true);
+	                    }),
+	                    models: _models
 	                };
-	                return new es6_promise_1.Promise(func);
 	            };
 	            ModelClass.className = _className;
 	            ModelClass.modelColumns = modelColumns;
@@ -4277,6 +4520,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            };
 	            this._localDB = localDB || false;
+	            this._useLocal = !!localDB;
 	            this._ajax = appPot.getAjax();
 	            if (alias) {
 	                this._queryObj['from']['alias'] = alias;
@@ -4421,7 +4665,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                limit: 1,
 	                offset: 1
 	            };
-	            if (this._localDB) {
+	            if (this._useLocal) {
 	                return this._queryToLocal()
 	                    .then(function (result) {
 	                    var returnResult = {};
@@ -4452,7 +4696,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	        Query.prototype.findList = function () {
 	            var _this = this;
-	            if (this._localDB) {
+	            if (this._useLocal) {
 	                return this._queryToLocal();
 	            }
 	            return this._post()
@@ -4477,10 +4721,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var _this = this;
 	            console.log('_queryToLocal');
 	            return (new es6_promise_1.Promise(function (resolve, reject) {
-	                var queryObj = (new sqlite_clause_translator_ts_1.default()).translate(_this._queryObj, _this._keyClassMap, classList);
+	                var queryObj = (new sqlite_clause_translator_ts_1.default()).translateSelect(_this._queryObj, _this._keyClassMap, classList);
 	                if (!_this._localDB) {
 	                    reject('Local Database is undefined');
 	                }
+	                var returnArray = [];
 	                _this._localDB.transaction(function (tx) {
 	                    console.log(queryObj.query);
 	                    console.log(queryObj.params);
@@ -4489,23 +4734,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        for (var _i = 0; _i < arguments.length; _i++) {
 	                            args[_i - 0] = arguments[_i];
 	                        }
-	                        console.log('callback 2');
-	                        console.log(args);
-	                        var returnArray = [];
 	                        for (var i = 0; i < args[1].rows.length; i++) {
 	                            returnArray.push(args[1].rows.item(i));
 	                        }
-	                        console.log(returnArray);
-	                        resolve(returnArray);
-	                    }, function () {
-	                        var args = [];
-	                        for (var _i = 0; _i < arguments.length; _i++) {
-	                            args[_i - 0] = arguments[_i];
-	                        }
-	                        console.log('callback 1');
-	                        console.log(args);
-	                        reject(args[0].message);
 	                    });
+	                }, function (error) {
+	                    reject(error);
+	                }, function () {
+	                    console.log('success');
+	                    resolve(returnArray);
 	                });
 	            })).then(function (records) {
 	                var preReturnObject = {};
@@ -4515,7 +4752,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                records.forEach(function (record, idx) {
 	                    Object.keys(record).forEach(function (colName) {
 	                        var matches = colName.match(/(.*)____(.*)/);
-	                        console.log(matches);
 	                        var alias = matches[1];
 	                        var trueColName = matches[2];
 	                        if (!preReturnObject[alias][idx]) {
@@ -4525,14 +4761,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        preReturnObject[alias][idx][trueColName] = record[colName];
 	                    });
 	                });
-	                console.log(preReturnObject);
 	                var returnObject = {};
 	                Object.keys(preReturnObject).forEach(function (alias) {
 	                    returnObject[alias] = preReturnObject[alias].map(function (record) {
 	                        return createModelInstance(_this._keyClassMap[alias], record);
 	                    });
 	                });
-	                console.log(returnObject);
 	                return returnObject;
 	            });
 	        };
@@ -4564,6 +4798,59 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	        return Query;
 	    }());
+	    var QueryLimited = (function (_super) {
+	        __extends(QueryLimited, _super);
+	        function QueryLimited() {
+	            _super.apply(this, arguments);
+	        }
+	        QueryLimited.prototype.findOne = function () {
+	            return es6_promise_1.Promise.reject("Cannot use \"findOne\" method to downlink. Please use \"execute\" method.");
+	        };
+	        QueryLimited.prototype.findList = function () {
+	            return es6_promise_1.Promise.reject("Cannot use \"findList\" method to downlink. Please use \"execute\" method.");
+	        };
+	        QueryLimited.prototype.setLocalDatabase = function (db) {
+	            this._localDB = db;
+	            return this;
+	        };
+	        QueryLimited.prototype.execute = function () {
+	            var _this = this;
+	            var promiseFunc = function (results) { return function (resolve, reject) {
+	                _this._localDB.transaction(function (tx) {
+	                    var className = _this._class.className;
+	                    var _a = classList[className]._getColumnsPlaceholders(), colNames = _a.colNames, placeholders = _a.placeholders;
+	                    var escapedColNames = colNames.map(function (c) { return '`' + c + '`'; });
+	                    var createTables = database_1.Database.getSqliteTableDefinition(_this._class);
+	                    createTables.forEach(function (table) {
+	                        console.log(table);
+	                        tx.executeSql(table);
+	                    });
+	                    console.log("DELETE FROM " + className);
+	                    tx.executeSql("DELETE FROM " + className);
+	                    console.log("DELETE FROM " + sqlite_clause_translator_ts_1.default.getQueueTableName(className));
+	                    tx.executeSql("DELETE FROM " + sqlite_clause_translator_ts_1.default.getQueueTableName(className));
+	                    var query = "INSERT INTO " + className + " (" + escapedColNames.join(',') + ") VALUES (" + placeholders.join(',') + ");";
+	                    console.log(query);
+	                    results[className].forEach(function (model) {
+	                        var params = colNames.map(function (key) {
+	                            return model.get(key);
+	                        });
+	                        console.log(params);
+	                        tx.executeSql(query, params);
+	                    });
+	                }, function (error) {
+	                    reject(error);
+	                }, function () {
+	                    resolve();
+	                });
+	            }; };
+	            return _super.prototype.findList.call(this)
+	                .then(function (results) {
+	                return new es6_promise_1.Promise(promiseFunc(results));
+	            });
+	        };
+	        return QueryLimited;
+	    }(Query));
 	})(Model = exports.Model || (exports.Model = {}));
 
 
@@ -19476,8 +19763,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function SqliteClauseTranslator() {
 	        this._params = [];
 	    }
-	    SqliteClauseTranslator.prototype.translate = function (queryObj, keyClassMap, classList) {
-	        console.log(queryObj);
+	    SqliteClauseTranslator.getQueueTableName = function (tableName) {
+	        return "apppot_" + tableName + "_queue";
+	    };
+	    SqliteClauseTranslator.prototype.translateDelete = function (tableName, id) {
+	        console.log('translateDelete');
+	        return {
+	            query: "DELETE FROM " + tableName + " WHERE objectId = ?",
+	            params: [id]
+	        };
+	    };
+	    SqliteClauseTranslator.prototype.translateUpdate = function (tableName, id, columns) {
+	        var params = [];
+	        var sets = Object.keys(columns).map(function (key) {
+	            params.push(columns[key]);
+	            return "`" + key + "` = ?";
+	        });
+	        params.push(id);
+	        return {
+	            query: "UPDATE " + tableName + " SET " + sets.join(',') + " WHERE objectId = ?",
+	            params: params
+	        };
+	    };
+	    SqliteClauseTranslator.prototype.translateSelect = function (queryObj, keyClassMap, classList) {
 	        this._keyClassMap = keyClassMap;
 	        this._classList = classList;
 	        var sql = this.selectFromJoin(queryObj) + ' ' +
@@ -19494,7 +19802,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    SqliteClauseTranslator.prototype.expression = function (source, params) {
 	        this._params = this._params.concat(params);
-	        return source.replace('#', '');
+	        return source.replace(/#/g, '');
 	    };
 	    SqliteClauseTranslator.prototype.limit = function (queryObj) {
 	        if (!queryObj.range) {
@@ -19513,8 +19821,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }).join(',');
 	    };
 	    SqliteClauseTranslator.prototype.where = function (queryObj) {
-	        var exp = queryObj['where']['expression'];
-	        return 'WHERE ' + this.expression(exp.source, exp.params);
+	        if (queryObj.where && queryObj.where.expression) {
+	            var exp = queryObj['where']['expression'];
+	            return 'WHERE ' + this.expression(exp.source, exp.params);
+	        }
+	        return '';
 	    };
 	    SqliteClauseTranslator.prototype.selectFromJoin = function (queryObj) {
 	        var _this = this;
@@ -19523,6 +19834,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var select = Object.keys(mainTableClass.modelColumns).map(function (col) {
 	            return "`" + mainTableAlias + "`.`" + col + "` AS " + mainTableAlias + "____" + col;
 	        });
+	        select.push("`" + mainTableAlias + "`.`objectId` AS " + mainTableAlias + "____objectId");
 	        var from = "FROM " + queryObj['from']['phyName'];
 	        if (queryObj['from']['phyName'] != queryObj['from']['alias']) {
 	            from += " AS " + queryObj['from']['alias'];
@@ -19530,7 +19842,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (queryObj.join && queryObj.join.length > 0) {
 	            queryObj.join.forEach(function (joinObj) {
 	                var alias = joinObj.entityAlias;
-	                from += joinObj.type + " " + joinObj.entity;
+	                from += " " + joinObj.type + " " + joinObj.entity;
 	                if (joinObj.entity != alias) {
 	                    from += " AS " + alias;
 	                }
@@ -19539,6 +19851,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var joinColumns = Object.keys(_this.getClass(alias).modelColumns).map(function (col) {
 	                    return "`" + alias + "`.`" + col + "` AS " + alias + "____" + col;
 	                });
+	                joinColumns.push("`" + alias + "`.`objectId` AS " + alias + "____objectId");
 	                select = select.concat(joinColumns);
 	            });
 	        }

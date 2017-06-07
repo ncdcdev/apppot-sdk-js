@@ -18,8 +18,12 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       'dist/apppot.js',
-      //'spec/config.js',
+      'spec/config.js',
+
       //'spec/user_spec.js'
+
+      //'spec/local_*.js'
+      
       'spec/**/*.js'
     ],
 

@@ -64,7 +64,7 @@ export class Database {
         {
           'colName': 'updateTime',
           'type': 'long'
-        }
+        },
       ]
     };
   }
@@ -119,9 +119,10 @@ export class Database {
     });
     columns.push('serverCreateTime TEXT');
     columns.push('serverUpdateTime TEXT');
-    columns.push('_removed INTEGER DEFAULT 0');
-    columns.push('_updated INTEGER DEFAULT 0');
-    return `CREATE TABLE IF NOT EXISTS ${name} ( ${columns.join(',')} );`;
+    return [
+      `CREATE TABLE IF NOT EXISTS ${name} ( ${columns.join(',')} );`,
+      `CREATE TABLE IF NOT EXISTS apppot_${name}_queue ( \`type\` TEXT, \`id\` TEXT PRIMARY KEY);`
+    ];
   }
 
   static getTableDefinition(model){

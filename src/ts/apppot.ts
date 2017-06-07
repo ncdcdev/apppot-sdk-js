@@ -21,6 +21,7 @@ export class AppPot {
   private _ajax: Ajax;
   private _inst;
   private _localDb;
+  private _isOnline;
   public User;
   public Group;
   public Model;
@@ -39,6 +40,7 @@ export class AppPot {
     this._config = new Config(props);
     this._authInfo = new AuthInfo(this);
     this._ajax = new Ajax(this._config, this._authInfo);
+    this._isOnline = true;
     const authenticators = {
       "LocalAuthenticator": LocalAuthenticator
     };
@@ -138,6 +140,14 @@ export class AppPot {
         .send(payload)
         .end(Ajax.end(resolve, reject));
     });
+  }
+
+  isOnline(){
+    return this._isOnline;
+  }
+
+  online(isOnline: Boolean){
+    this._isOnline = isOnline;
   }
 
   sendMail(sendingRouteName, mailFrom, mailTo, mailCc, mailBcc, subject, body){

@@ -100,10 +100,10 @@ export namespace Model {
         Object.keys(modelColumns).forEach((key) => {
           Object.defineProperty(this, key, {
             get: function () {
-                return this._columns[key];
+              return this.get(key);
             },
             set: function (value) {
-                this._columns[key] = value;
+              this.set(key, value);
             },
             enumerable: true,
             configurable: true
@@ -114,50 +114,34 @@ export namespace Model {
         }
       }
 
-      /* ローカル系 メソッド */
-      static saveToLocal(...args){
-        let query = classList[_className].select();
-        if(args.length != 0){
-          query = query.where(args);
-        }
-        return query.findList()
-          .then(result => {
-            return classList[_className].insertAllLocal(result[_className]);
-          })
-      }
-
-      static findAllLocal(){
-        return classList[_className].selectLocal().findList();
-      }
-
-      static findByIdLocal(id:string){
-        return classList[_className].selectLocal()
-          .where('objectId = ?', id)
-          .findOne();
-      }
-
-      static insertLocal(data: Object){
-        return classList[_className].insertAllLocal([data])
-          .then(models => models[0]);
-      }
-
-      static insertAllLocal(objects: ModelClass[] | Object[]){
-
-        let { columns, models } = classList[_className]._normalizeColumns(objects);
-        const colNames = Object.keys(columns[0]).map(colName => {
+      static _getColumnsPlaceholders(includeDates){
+        const colNames = Object.keys(classList[_className].filterDefinedColumnOnly({})).map(colName => {
           return colName
         });
-        const placeHolders = colNames.map( _ => {
+
+        const placeholders = colNames.map( _ => {
           return '?'
-        }).join(',');
-        console.log(columns);
-        console.log(models);
+        });
+
+        return {
+          colNames,
+          placeholders
+        };
+      }
+
+      static _insertAllLocal(objects: ModelClass[] | Object[]){
+
+        let { columns, models } = classList[_className]._normalizeColumns(objects);
+
+        const {colNames, placeholders} =  classList[_className]._getColumnsPlaceholders();
+
+        const objectIds = [];
         const records = columns.map( (record, idx) => {
           return colNames.map( key => {
             if( key == 'objectId' && ( record[key] === null||record[key] === undefined ) ){
               const id = `${_className}_${appPot.uuid()}`;
               models[idx].set('objectId', id);
-              console.log('assign objectId: '+id);
+              objectIds[idx] = id;
               return id;
             }
             return record[key];
@@ -171,19 +155,24 @@ export namespace Model {
             reject('Local Database is undefined');
           }
 
-          const createTable = Database.getSqliteTableDefinition(classList[_className]);
-
+          const createTables = Database.getSqliteTableDefinition(classList[_className]);
 
           db.transaction((tx)=>{
-            console.log(createTable);
-            tx.executeSql(createTable);
-            records.forEach( record => {
+            createTables.forEach(table => {
+              tx.executeSql(table);
+            });
+            records.forEach( (record, idx) => {
               const escapedColNames = colNames.map(name => "`"+name+"`");
-              const query = `INSERT INTO ${_className} ( ${escapedColNames.join(',')} ) VALUES ( ${placeHolders} )`;
-              console.log(query);
-              console.log(record);
-              //console.log( JSON.stringify( record ) );
-              tx.executeSql(query, record);
+              const query = `INSERT INTO ${_className} ( ${escapedColNames.join(',')} ) VALUES ( ${placeholders.join(',')} )`;
+              console.log( query );
+              console.log( JSON.stringify( record ) );
+              tx.executeSql(query, record, () => {
+                const query = `INSERT INTO ${SqliteClauseTranslator.getQueueTableName(_className)} ( \`type\`, \`id\` ) VALUES ( ?, ? )`;
+                const params = ['created', objectIds[idx]];
+                console.log( query );
+                console.log( JSON.stringify( params ) );
+                tx.executeSql(query, params);
+              });
             });
           }, (error) => {
             reject(error);
@@ -194,48 +183,7 @@ export namespace Model {
         });
       }
 
-      static selectLocal(alias?:string){
-        if(alias){
-          alias = alias.replace(/^#+/, '');
-        }
-        return new Query(appPot, this||classList[_className], alias, appPot.getLocalDatabase());
-      }
-
-      static _rawInsert(formatedColumns: Object[]){
-          return new Promise((resolve, reject)=>{
-            appPot.getAjax().post(`data/batch/addData`)//${_className}`)
-            .send({
-              objectName: _className,
-              data: formatedColumns
-            })
-            .end(Ajax.end(resolve, reject));
-          });
-      }
-
-      static _normalizeColumns(objects: ModelClass[] | Object[]){
-        let _columns;
-        let _models;
-        if(objects[0] instanceof ModelClass){
-          _models = objects;
-          _columns = _models.map((model) => {
-            return model.get();
-          });
-        }else{
-          _columns = objects;
-          _models = _columns.map((column) => {
-            const model =  new (this||classList[_className])(column);
-            return model;
-          });
-        }
-        return {
-          columns: _models.map((_model) => {
-            return classList[_className].formatColumns(_model.get(), true);
-          }),
-          models: _models
-        }
-      }
-
-      static insertAll(objects: ModelClass[] | Object[]){
+      static _insertAll(objects: ModelClass[] | Object[]){
         let { columns, models } = classList[_className]._normalizeColumns(objects);
         return classList[_className]._rawInsert(columns)
           .then((obj)=>{
@@ -246,7 +194,20 @@ export namespace Model {
           });
       }
 
-      static insert(data: Object){
+      static insertAll(objects: ModelClass[] | Object[]){
+        if(appPot.isOnline()){
+          return classList[_className]._insertAll(objects);
+        }else{
+          return classList[_className]._insertAllLocal(objects);
+        }
+      }
+
+      static _insertLocal(data: Object){
+        return classList[_className]._insertAllLocal([data])
+          .then(models => models[0]);
+      }
+
+      static _insert(data: Object){
         if(data instanceof Array){
           throw 'invalid argument type: use insertAll';
         }
@@ -264,7 +225,30 @@ export namespace Model {
           });
       }
 
-      static findById(id:string){
+      static insert(data: Object){
+        if(appPot.isOnline()){
+          return classList[_className]._insert(data);
+        }else{
+          return classList[_className]._insertLocal(data);
+        }
+      }
+
+      static _findByIdLocal(id:string){
+        console.log('findbyidlocal id: ' + id);
+        return classList[_className]._selectLocal()
+          .where('objectId = ?', id)
+          .findOne()
+          .then(obj => {
+            console.log('findbyidlocal');
+            console.log(obj);
+            if(!obj[_className]) {
+              return Promise.reject('not found');
+            }
+            return obj[_className];
+          });
+      }
+
+      static _findById(id:string){
         const func = (resolve, reject) => {
            appPot.getAjax().get(`data/${_className}/${id}`)
              .end(Ajax.end((obj) => {
@@ -275,19 +259,273 @@ export namespace Model {
         return new Promise(func);
       }
 
-      static findAll(){
+      static findById(id:string){
+        if(appPot.isOnline()){
+          return classList[_className]._findById(id);
+        }else{
+          return classList[_className]._findByIdLocal(id);
+        }
+      }
+
+      static _findAllLocal(){
+        return classList[_className]._selectLocal().findList();
+      }
+
+      static _findAll(){
         return classList[_className].select().findList();
       }
 
-      static select(alias?:string){
+      static findAll(){
+        if(appPot.isOnline()){
+          return classList[_className]._findAll();
+        }else{
+          return classList[_className]._findAllLocal();
+        }
+      }
+
+      static _selectLocal(alias?:string){
+        if(alias){
+          alias = alias.replace(/^#+/, '');
+        }
+        return new Query(appPot, this||classList[_className], alias, appPot.getLocalDatabase());
+      }
+
+      static _select(alias?:string){
         if(alias){
           alias = alias.replace(/^#+/, '');
         }
         return new Query(appPot, this||classList[_className], alias);
       }
 
+      static select(alias?:string){
+        if(appPot.isOnline()){
+          return classList[_className]._select(alias);
+        }else{
+          return classList[_className]._selectLocal(alias);
+        }
+      }
+
+      _insertLocal(...args){
+        this.set.apply(this, args);
+        if(!this.isNew()){
+          return Promise.reject(new Error(-1, 'object is created'));
+        }
+        return classList[_className]
+          ._insertLocal( this.get() )
+          .then(() => {
+            return this;
+          });
+      }
+
+      _insert(...args){
+        this.set.apply(this, args);
+        if(!this.isNew()){
+          return Promise.reject(new Error(-1, 'object is created'));
+        }
+        const func = (resolve, reject) => {
+          var columns = classList[_className].formatColumns(this._columns, true);
+          appPot.getAjax().post(`data/batch/addData`)
+            .send({
+              objectName: _className,
+              data: [columns]
+            })
+            .end(Ajax.end((obj) => {
+              resolve( this.set(obj['results'][0]) );
+            }, reject));
+        }
+        return new Promise(func);
+      }
+
+      insert(...args){
+        if(appPot.isOnline()){
+          return this._insert.apply(this, args);
+        }else{
+          return this._insertLocal.apply(this, args);
+        }
+      }
+
+      _updateLocal(...args){
+        if(this.isNew()){
+          return Promise.reject(new Error(-1, 'object is not created'));
+        }
+        this.set.apply(this, args);
+        var columns = classList[_className].formatColumns(this._columns, false);
+
+        const queryObj = (new SqliteClauseTranslator()).translateUpdate(_className, columns['objectId'], columns);
+
+        return new Promise( ( resolve, reject ) => {
+          const db = appPot.getLocalDatabase();
+          db.transaction((tx)=>{
+            console.log(queryObj.query);
+            console.log(queryObj.params);
+            tx.executeSql(queryObj.query, queryObj.params, (...args) => {
+              const query = `INSERT OR IGNORE INTO ${SqliteClauseTranslator.getQueueTableName(_className)} ( \`type\`, \`id\` ) VALUES ( ?, ? )`;
+              const params = ['updated', columns['objectId']];
+              console.log( query );
+              console.log( JSON.stringify( params ) );
+              tx.executeSql(query, params);
+            });
+          }, (error) => {
+            reject(error);
+          }, () => {
+            console.log('success');
+            resolve(this);
+          });
+        });
+      }
+
+      _update(...args){
+        if(this.isNew()){
+          return Promise.reject(new Error(-1, 'object is not created'));
+        }
+        this.set.apply(this, args);
+        const func = (resolve, reject) => {
+          var columns = classList[_className].formatColumns(this._columns, false);
+          appPot.getAjax().post('data/batch/updateData')
+            .send({
+              objectName: _className,
+              data: [columns]
+            })
+            .end(Ajax.end((obj) => {
+              this.set(obj['results'][0]);
+              resolve(this);
+            }, reject));
+        };
+        return new Promise(func);
+      }
+
+      update(...args){
+        if(appPot.isOnline()){
+          return this._update.apply(this, args);
+        }else{
+          return this._updateLocal.apply(this, args);
+        }
+      }
+
+      _saveLocal(...args) {
+        if(this.isNew()){
+          return this._insertLocal.apply(this, args);
+        }else{
+          return this._updateLocal.apply(this, args);
+        }
+      }
+
+      _save(...args){
+        if(this.isNew()){
+          return this._insert.apply(this, args);
+        }else{
+          return this._update.apply(this, args);
+        }
+      }
+
+      save(...args){
+        if(appPot.isOnline()){
+          return this._save.apply(this, args);
+        }else{
+          return this._saveLocal.apply(this, args);
+        }
+      }
+
+      static removeById(_id){
+        return classList[_className].findById(_id).then(function(model){
+          return model.remove();
+        });
+      }
+
+      _removeLocal(){
+
+        return new Promise( ( resolve, reject ) => {
+          const db = appPot.getLocalDatabase();
+          db.transaction((tx)=>{
+            const queryObj = (new SqliteClauseTranslator()).translateDelete(_className, this.get('objectId'));
+            console.log(queryObj.query);
+            console.log(queryObj.params);
+            tx.executeSql(queryObj.query, queryObj.params);
+            const query = `SELECT type FROM ${SqliteClauseTranslator.getQueueTableName(_className)} WHERE id = ?`
+            const params = [this.get('objectId')];
+            console.log(query);
+            console.log(params);
+            tx.executeSql(query, params, (...args) => {
+              let query = `INSERT OR REPLACE INTO ${SqliteClauseTranslator.getQueueTableName(_className)} ( \`type\`, \`id\` ) VALUES ( ?, ? )`;
+              let params = ['deleted', this.get('objectId')];
+              if(args[1].rows.length > 0 && args[1].rows.item(0).type == 'created'){
+                query = `DELETE FROM ${SqliteClauseTranslator.getQueueTableName(_className)} WHERE id = ?`;
+                params = [this.get('objectId')];
+              }
+              console.log(query);
+              console.log(params);
+              tx.executeSql(query, params);
+            });
+          }, (error) => {
+            console.log('error');
+            console.log(error);
+            reject(error);
+          }, () => {
+            console.log('success');
+            resolve(true);
+          });
+        });
+      }
+
+      _remove(){
+        const func = (resolve, reject) => {
+          appPot.getAjax().post('data/batch/deleteData')
+            .send({
+              objectName: _className,
+              objectIds: [{
+                objectId: this.get('objectId'),
+                serverUpdateTime: moment(this.get('serverUpdateTime'))
+                  .utcOffset(9)
+                  .format('YYYY-MM-DDTHH:mm:ss.SSSZ')
+              }]
+            })
+            .end(Ajax.end(resolve, reject));
+        };
+        return new Promise(func);
+      }
+
+      remove(){
+        if(appPot.isOnline()){
+          return this._remove.apply(this);
+        }else{
+          return this._removeLocal.apply(this);
+        }
+      }
+
       isNew(){
         return !this._columns['objectId'];
+      }
+
+      static downlink(alias?:string){
+        if( ! appPot.isOnline()){
+          throw "offline mode";
+        }
+        return new QueryLimited(appPot, this||classList[_className], alias)
+          .setLocalDatabase(appPot.getLocalDatabase());
+      }
+
+      static _debug(){
+        let returnArray = [];
+        return new Promise( ( resolve, reject ) => {
+          const db = appPot.getLocalDatabase();
+          db.transaction((tx)=>{
+            tx.executeSql('SELECT * FROM ' + _className, [], (...args) => {
+              for(var i = 0; i < args[1].rows.length; i++){
+                returnArray.push(args[1].rows.item(i));
+              }
+              tx.executeSql('SELECT * FROM ' + SqliteClauseTranslator.getQueueTableName(_className), [], (...args) => {
+                for(var i = 0; i < args[1].rows.length; i++){
+                  returnArray.push(args[1].rows.item(i));
+                }
+              });
+            });
+          }, (error) => {
+            reject(error);
+          }, () => {
+            console.log('success');
+            resolve(returnArray);
+          });
+        });
       }
 
       get(colName?: string){
@@ -316,10 +554,10 @@ export namespace Model {
         Object.keys(this._columns).forEach((key) => {
           Object.defineProperty(this, key, {
             get: function () {
-                return this._columns[key];
+              return this.get(key);
             },
             set: function (value) {
-                this._columns[key] = value;
+              this.set(key, value);
             },
             enumerable: true,
             configurable: true
@@ -421,10 +659,10 @@ export namespace Model {
           _columns['createTime'] = Date.now()/1000;
         }
         _columns['updateTime'] = Date.now()/1000;
-        return classList[_className].doDefinedColumnOnly(_columns);
+        return classList[_className].filterDefinedColumnOnly(_columns);
       }
 
-      static doDefinedColumnOnly(columns){
+      static filterDefinedColumnOnly(columns){
         let filteredColumns = {};
         Object.keys(modelColumns).forEach((col)=>{
           filteredColumns[col] = columns[col];
@@ -438,74 +676,38 @@ export namespace Model {
         return filteredColumns;
       }
 
-      insert(...args){
-        this.set.apply(this, args);
-        if(!this.isNew()){
-          return Promise.reject(new Error(-1, 'object is created'));
-        }
-        const func = (resolve, reject) => {
-          var columns = classList[_className].formatColumns(this._columns, true);
-          appPot.getAjax().post(`data/batch/addData`)
+      static _rawInsert(formatedColumns: Object[]){
+          return new Promise((resolve, reject)=>{
+            appPot.getAjax().post(`data/batch/addData`)//${_className}`)
             .send({
               objectName: _className,
-              data: [columns]
-            })
-            .end(Ajax.end((obj) => {
-              resolve( this.set(obj['results'][0]) );
-            }, reject));
-        }
-        return new Promise(func);
-      }
-
-      update(...args){
-        if(this.isNew()){
-          return Promise.reject(new Error(-1, 'object is not created'));
-        }
-        this.set.apply(this, args);
-        const func = (resolve, reject) => {
-          var columns = classList[_className].formatColumns(this._columns, false);
-          appPot.getAjax().post('data/batch/updateData')
-            .send({
-              objectName: _className,
-              data: [columns]
-            })
-            .end(Ajax.end((obj) => {
-              this.set(obj['results'][0]);
-              resolve(this);
-            }, reject));
-        };
-        return new Promise(func);
-      }
-
-      save(...args){
-        if(this.isNew()){
-          return this.insert.apply(this, args);
-        }else{
-          return this.update.apply(this, args);
-        }
-      }
-
-      static removeById(_id){
-        return classList[_className].findById(_id).then(function(model){
-          return model.remove();
-        });
-      }
-
-      remove(){
-        const func = (resolve, reject) => {
-          appPot.getAjax().post('data/batch/deleteData')
-            .send({
-              objectName: _className,
-              objectIds: [{
-                objectId: this.get('objectId'),
-                serverUpdateTime: moment(this.get('serverUpdateTime'))
-                  .utcOffset(9)
-                  .format('YYYY-MM-DDTHH:mm:ss.SSSZ')
-              }]
+              data: formatedColumns
             })
             .end(Ajax.end(resolve, reject));
-        };
-        return new Promise(func);
+          });
+      }
+
+      static _normalizeColumns(objects: ModelClass[] | Object[]){
+        let _columns;
+        let _models;
+        if(objects[0] instanceof ModelClass){
+          _models = objects;
+          _columns = _models.map((model) => {
+            return model.get();
+          });
+        }else{
+          _columns = objects;
+          _models = _columns.map((column) => {
+            const model =  new (this||classList[_className])(column);
+            return model;
+          });
+        }
+        return {
+          columns: _models.map((_model) => {
+            return classList[_className].formatColumns(_model.get(), true);
+          }),
+          models: _models
+        }
       }
     };
 
@@ -514,11 +716,12 @@ export namespace Model {
 
   class Query {
 
-    private _queryObj: any;
-    private _class;
-    private _ajax: Ajax;
-    private _keyClassMap;
-    private _localDB: any;
+    protected _queryObj: any;
+    protected _class;
+    protected _ajax: Ajax;
+    protected _keyClassMap;
+    protected _localDB: any;
+    protected _useLocal: Boolean;
 
     constructor(appPot:AppPot, classObj, alias?:string, localDB?:any){
       this._class = classObj;
@@ -528,6 +731,7 @@ export namespace Model {
         }
       };
       this._localDB = localDB || false;
+      this._useLocal = !!localDB;
       this._ajax = appPot.getAjax();
       if(alias){
         this._queryObj['from']['alias'] = alias;
@@ -657,7 +861,7 @@ export namespace Model {
         limit: 1,
         offset: 1
       };
-      if(this._localDB){
+      if(this._useLocal){
         return this._queryToLocal()
           .then( result => {
             let returnResult = {};
@@ -687,7 +891,7 @@ export namespace Model {
     }
 
     findList(){
-      if(this._localDB){
+      if(this._useLocal){
         return this._queryToLocal();
           
       }
@@ -713,27 +917,24 @@ export namespace Model {
     private _queryToLocal(){
       console.log('_queryToLocal');
       return (new Promise( (resolve, reject) => {
-        const queryObj = (new SqliteClauseTranslator()).translate( this._queryObj, this._keyClassMap, classList);
+        const queryObj = (new SqliteClauseTranslator()).translateSelect( this._queryObj, this._keyClassMap, classList);
         if(!this._localDB){
           reject('Local Database is undefined');
         }
+        let returnArray = [];
         this._localDB.transaction((tx)=>{
           console.log(queryObj.query);
           console.log(queryObj.params);
           tx.executeSql(queryObj.query, queryObj.params, (...args) => {
-            console.log('callback 2');
-            console.log(args);
-            let returnArray = [];
             for(var i = 0; i < args[1].rows.length; i++){
               returnArray.push(args[1].rows.item(i));
             }
-            console.log(returnArray);
-            resolve(returnArray);
-          }, (...args) => {
-            console.log('callback 1');
-            console.log(args);
-            reject(args[0].message);
           });
+        }, (error) => {
+          reject(error);
+        }, () => {
+          console.log('success');
+          resolve(returnArray);
         });
       })).then( (records:Object[]) => {
         let preReturnObject = {};
@@ -743,7 +944,6 @@ export namespace Model {
         records.forEach( (record, idx) => {
           Object.keys(record).forEach( colName => {
             const matches = colName.match(/(.*)____(.*)/);
-            console.log(matches);
             const alias = matches[1];
             const trueColName = matches[2];
             if(!preReturnObject[alias][idx]){
@@ -752,14 +952,12 @@ export namespace Model {
             preReturnObject[alias][idx][trueColName] = record[colName];
           });
         });
-        console.log(preReturnObject);
         let returnObject = {};
         Object.keys(preReturnObject).forEach( alias => {
           returnObject[alias] = preReturnObject[alias].map( record => {
             return createModelInstance( this._keyClassMap[alias], record );
           });
         });
-        console.log(returnObject);
         return returnObject;
       });
     }
@@ -787,6 +985,63 @@ export namespace Model {
             }));
         };
         return new Promise(func);
+    }
+  }
+
+  class QueryLimited extends Query {
+    findOne(){
+      return Promise.reject("Cannot use \"findOne\" method to downlink. Please use \"execute\" method.");
+    }
+
+    findList(){
+      return Promise.reject("Cannot use \"findList\" method to downlink. Please use \"execute\" method.");
+    }
+
+    setLocalDatabase(db){
+      this._localDB = db;
+      return this;
+    }
+
+    execute(){
+      const promiseFunc = results => (resolve, reject) => {
+        this._localDB.transaction((tx)=>{
+          const className = this._class.className;
+
+          const {colNames, placeholders} =  classList[className]._getColumnsPlaceholders();
+          const escapedColNames = colNames.map( c => '`' + c + '`' );
+
+          const createTables = Database.getSqliteTableDefinition(this._class);
+
+          createTables.forEach(table => {
+            console.log(table);
+            tx.executeSql(table);
+          });
+
+          console.log(`DELETE FROM ${className}`);
+          tx.executeSql(`DELETE FROM ${className}`);
+          console.log(`DELETE FROM ${SqliteClauseTranslator.getQueueTableName(className)}`);
+          tx.executeSql(`DELETE FROM ${SqliteClauseTranslator.getQueueTableName(className)}`);
+
+          const query = `INSERT INTO ${className} (${escapedColNames.join(',')}) VALUES (${placeholders.join(',')});`
+          console.log(query);
+          results[className].forEach( model => {
+            const params = colNames.map( key => {
+              return model.get(key);
+            });
+            console.log(params);
+            tx.executeSql(query, params);
+          });
+        }, (error) => {
+          reject(error);
+        }, () => {
+          resolve();
+        });
+      };
+
+      return super.findList()
+        .then(results => {
+          return new Promise(promiseFunc(results));
+      });
     }
   }
 }

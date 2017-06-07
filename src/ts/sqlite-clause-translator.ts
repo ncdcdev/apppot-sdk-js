@@ -7,8 +7,33 @@ export default class SqliteClauseTranslator {
     this._params = [];
   }
 
-  translate(queryObj, keyClassMap, classList){
-    console.log(queryObj);
+  static getQueueTableName(tableName) {
+    return `apppot_${tableName}_queue`;
+  }
+
+  translateDelete(tableName, id){
+    console.log('translateDelete');
+    return {
+      query: `DELETE FROM ${tableName} WHERE objectId = ?`,
+      params: [id]
+    }
+  }
+
+  translateUpdate(tableName, id, columns){
+    const params = [];
+    const sets = Object.keys(columns).map( key => {
+      params.push( columns[key] );
+      return `\`${key}\` = ?`
+    });
+    params.push(id);
+
+    return {
+      query: `UPDATE ${tableName} SET ${sets.join(',')} WHERE objectId = ?`,
+      params
+    }
+  }
+
+  translateSelect(queryObj, keyClassMap, classList){
     this._keyClassMap = keyClassMap;
     this._classList = classList;
     const sql = this.selectFromJoin(queryObj) + ' ' +
@@ -27,7 +52,7 @@ export default class SqliteClauseTranslator {
 
   expression(source, params){
     this._params = this._params.concat( params );
-    return source.replace('#', '');
+    return source.replace(/#/g, '');
   }
 
   limit(queryObj){
@@ -49,8 +74,11 @@ export default class SqliteClauseTranslator {
   }
 
   where(queryObj){
-    const exp = queryObj['where']['expression'];
-    return 'WHERE ' + this.expression(exp.source, exp.params);
+    if(queryObj.where && queryObj.where.expression){
+      const exp = queryObj['where']['expression'];
+      return 'WHERE ' + this.expression(exp.source, exp.params);
+    }
+    return '';
   }
 
   selectFromJoin(queryObj){
@@ -59,6 +87,7 @@ export default class SqliteClauseTranslator {
     let select = Object.keys(mainTableClass.modelColumns).map( col => {
       return `\`${mainTableAlias}\`.\`${col}\` AS ${mainTableAlias}____${col}`;
     });
+    select.push(`\`${mainTableAlias}\`.\`objectId\` AS ${mainTableAlias}____objectId`);
 
     let from = `FROM ${queryObj['from']['phyName']}`
     if(queryObj['from']['phyName'] != queryObj['from']['alias']){
@@ -68,7 +97,7 @@ export default class SqliteClauseTranslator {
     if(queryObj.join && queryObj.join.length > 0){
       queryObj.join.forEach( joinObj => {
         const alias = joinObj.entityAlias;
-        from += `${joinObj.type} ${joinObj.entity}`
+        from += ` ${joinObj.type} ${joinObj.entity}`
         if(joinObj.entity != alias){
           from += ` AS ${alias}`
         }
@@ -77,6 +106,7 @@ export default class SqliteClauseTranslator {
         let joinColumns = Object.keys(this.getClass( alias ).modelColumns).map( col => {
           return `\`${alias}\`.\`${col}\` AS ${alias}____${col}`
         });
+        joinColumns.push(`\`${alias}\`.\`objectId\` AS ${alias}____objectId`);
         select = select.concat( joinColumns );
       });
     }
