@@ -1,6 +1,6 @@
 {
   "name": "apppot-sdk",
-  "version": "2.3.23",
+  "version": "2.3.24",
   "description": "",
   "main": "dist/apppot.js",
   "scripts": {
@@ -48,6 +48,7 @@
     "karma-spec-reporter": "0.0.26",
     "moment": "^2.13.0",
     "object-assign": "^4.1.0",
+    "strip-loader": "^0.1.2",
     "superagent": "^1.8.3",
     "ts-loader": "^0.8.2",
     "typescript": "^1.8.10",
