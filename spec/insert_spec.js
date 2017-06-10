@@ -24,8 +24,8 @@ describe('insertのテスト', function(){
       expect(model.get('objectId')).toMatch(/Task_[0-9a-f]+/);
       expect(model.get('title')).toEqual(columns.title);
       expect(model.get('description')).toEqual(columns.description);
-      expect(model.get('serverUpdateTime') instanceof Date).toBeTruthy();
-      expect(typeof model.get('done')).toBe('boolean');
+      expect(typeof model.get('serverUpdateTime')).toEqual('string');
+      expect(typeof model.get('done')).toEqual('boolean');
       expect(model.get('registeredDate') instanceof Date).toBeTruthy();
       return model.objectId;
     })
@@ -37,8 +37,8 @@ describe('insertのテスト', function(){
       expect(model.objectId).toMatch(/Task_[0-9a-f]+/);
       expect(model.title).toEqual(columns.title);
       expect(model.description).toEqual(columns.description);
-      expect(model.serverUpdateTime instanceof Date).toBeTruthy();
-      expect(typeof model.done).toBe('boolean');
+      expect(typeof model.serverUpdateTime).toEqual('string');
+      expect(typeof model.done).toEqual('boolean');
       expect(model.registeredDate instanceof Date).toBeTruthy();
       done()
     })
@@ -66,12 +66,12 @@ describe('insertのテスト', function(){
       expect(_models[0].get('objectId')).toMatch(/Task_[0-9a-f]+/);
       // expect(_models[0].get('title')).toEqual(models[0].title);
       // expect(_models[0].get('description')).toEqual(models[0].description);
-      expect(_models[0].get('serverUpdateTime') instanceof Date).toBe(true);
+      expect(typeof _models[0].get('serverUpdateTime')).toEqual('string');
       expect(_models[1] instanceof TaskModel).toBe(true);
       expect(_models[1].get('objectId')).toMatch(/Task_[0-9a-f]+/);
       // expect(_models[1].get('title')).toEqual(models[1].title);
       // expect(_models[1].get('description')).toEqual(models[1].description);
-      expect(_models[1].get('serverUpdateTime') instanceof Date).toBe(true);
+      expect(typeof _models[1].get('serverUpdateTime')).toEqual('string');
     })
     .then(function(){
       return TaskModel.findAll();
@@ -84,12 +84,12 @@ describe('insertのテスト', function(){
       expect(_models[0].objectId).toMatch(/Task_[0-9a-f]+/);
       // expect(_models[0].title).toEqual(models[0].title);
       // expect(_models[0].description).toEqual(models[0].description);
-      expect(_models[0].serverUpdateTime instanceof Date).toBe(true);
+      expect(typeof _models[0].serverUpdateTime).toEqual('string');
       expect(_models[1] instanceof TaskModel).toBe(true);
       expect(_models[1].objectId).toMatch(/Task_[0-9a-f]+/);
       // expect(_models[1].title).toEqual(models[1].title);
       // expect(_models[1].description).toEqual(models[1].description);
-      expect(_models[1].serverUpdateTime instanceof Date).toBe(true);
+      expect(typeof _models[1].serverUpdateTime).toEqual('string');
       done()
     })
     .catch(function(err){
@@ -116,12 +116,12 @@ describe('insertのテスト', function(){
       expect(_models[0].get('objectId')).toMatch(/Task_[0-9a-f]+/);
       // expect(_models[0].get('title')).toEqual(columns[0].title);
       // expect(_models[0].get('description')).toEqual(columns[0].description);
-      expect(_models[0].get('serverUpdateTime') instanceof Date).toBe(true);
+      expect(typeof _models[0].get('serverUpdateTime')).toEqual('string');
       expect(_models[1] instanceof TaskModel).toBe(true);
       expect(_models[1].get('objectId')).toMatch(/Task_[0-9a-f]+/);
       // expect(_models[1].get('title')).toEqual(columns[1].title);
       // expect(_models[1].get('description')).toEqual(columns[1].description);
-      expect(_models[1].get('serverUpdateTime') instanceof Date).toBe(true);
+      expect(typeof _models[1].get('serverUpdateTime')).toEqual('string');
     })
     .then(function(){
       return TaskModel.findAll();
@@ -134,12 +134,12 @@ describe('insertのテスト', function(){
       expect(_models[0].objectId).toMatch(/Task_[0-9a-f]+/);
       // expect(_models[0].title).toEqual(columns[0].title);
       // expect(_models[0].description).toEqual(columns[0].description);
-      expect(_models[0].serverUpdateTime instanceof Date).toBe(true);
+      expect(typeof _models[0].serverUpdateTime).toEqual('string');
       expect(_models[1] instanceof TaskModel).toBe(true);
       expect(_models[1].objectId).toMatch(/Task_[0-9a-f]+/);
       // expect(_models[1].title).toEqual(columns[1].title);
       // expect(_models[1].description).toEqual(columns[1].description);
-      expect(_models[1].serverUpdateTime instanceof Date).toBe(true);
+      expect(typeof _models[1].serverUpdateTime).toEqual('string');
       done()
     })
     .catch(function(err){
@@ -168,12 +168,12 @@ describe('insertのテスト', function(){
       expect(_models[0].get('objectId')).toMatch(/Task_[0-9a-f]+/);
       expect(_models[0].get('title')).toEqual(columns[0].title);
       expect(_models[0].get('description')).toEqual(columns[0].description);
-      expect(_models[0].get('serverUpdateTime') instanceof Date).toBe(true);
+      expect(typeof _models[0].get('serverUpdateTime')).toEqual('string');
       expect(_models[1] instanceof TaskModel).toBe(true);
       expect(_models[1].get('objectId')).toMatch(/Task_[0-9a-f]+/);
       expect(_models[1].get('title')).toEqual(columns[1].title);
       expect(_models[1].get('description')).toEqual(columns[1].description);
-      expect(_models[1].get('serverUpdateTime') instanceof Date).toBe(true);
+      expect(typeof _models[1].get('serverUpdateTime')).toEqual('string');
     })
     .catch(function(err){
       done()

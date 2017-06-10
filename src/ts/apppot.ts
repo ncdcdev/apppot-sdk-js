@@ -22,6 +22,7 @@ export class AppPot {
   private _inst;
   private _localDb;
   private _isOnline;
+  private _lock = [];
   public User;
   public Group;
   public Model;
@@ -69,6 +70,18 @@ export class AppPot {
       uuid += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random)).toString(16);
     }
     return uuid;
+  }
+
+  isLocked(tableName) {
+    return this._lock[tableName];
+  }
+
+  lock(tableName){
+    this._lock[tableName] = true;
+  }
+
+  unlock(tableName){
+    this._lock[tableName] = false;
   }
 
   getAjax(){

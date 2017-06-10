@@ -121,7 +121,7 @@ export class Database {
     columns.push('serverUpdateTime TEXT');
     return [
       `CREATE TABLE IF NOT EXISTS ${name} ( ${columns.join(',')} );`,
-      `CREATE TABLE IF NOT EXISTS apppot_${name}_queue ( \`type\` TEXT, \`id\` TEXT PRIMARY KEY);`
+      `CREATE TABLE IF NOT EXISTS apppot_${name}_queue ( \`type\` TEXT, \`id\` TEXT PRIMARY KEY, \`serverUpdateTime\` TEXT);`
     ];
   }
 

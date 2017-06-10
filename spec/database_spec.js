@@ -54,7 +54,7 @@ describe('createDatabaseのテスト', function(){
       expect(model.get('objectId')).toMatch(/Task_[0-9a-f]+/);
       expect(model.get('title')).toEqual(columns.title);
       expect(model.get('description')).toEqual(columns.description);
-      expect(model.get('serverUpdateTime') instanceof Date).toBe(true);
+      expect(typeof model.get('serverUpdateTime')).toEqual('string');
     })
     .then(function(){
       return AppPot.dropAndCreateDatabase([

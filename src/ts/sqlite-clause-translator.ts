@@ -88,6 +88,8 @@ export default class SqliteClauseTranslator {
       return `\`${mainTableAlias}\`.\`${col}\` AS ${mainTableAlias}____${col}`;
     });
     select.push(`\`${mainTableAlias}\`.\`objectId\` AS ${mainTableAlias}____objectId`);
+    select.push(`\`${mainTableAlias}\`.\`serverCreateTime\` AS ${mainTableAlias}____serverCreateTime`);
+    select.push(`\`${mainTableAlias}\`.\`serverUpdateTime\` AS ${mainTableAlias}____serverUpdateTime`);
 
     let from = `FROM ${queryObj['from']['phyName']}`
     if(queryObj['from']['phyName'] != queryObj['from']['alias']){

@@ -167,8 +167,8 @@ export namespace Model {
               console.log( query );
               console.log( JSON.stringify( record ) );
               tx.executeSql(query, record, () => {
-                const query = `INSERT INTO ${SqliteClauseTranslator.getQueueTableName(_className)} ( \`type\`, \`id\` ) VALUES ( ?, ? )`;
-                const params = ['created', objectIds[idx]];
+                const query = `INSERT INTO ${SqliteClauseTranslator.getQueueTableName(_className)} ( \`type\`, \`id\`, \`serverUpdateTime\` ) VALUES ( ?, ?, ? )`;
+                const params = ['created', objectIds[idx], null];
                 console.log( query );
                 console.log( JSON.stringify( params ) );
                 tx.executeSql(query, params);
@@ -359,8 +359,8 @@ export namespace Model {
             console.log(queryObj.query);
             console.log(queryObj.params);
             tx.executeSql(queryObj.query, queryObj.params, (...args) => {
-              const query = `INSERT OR IGNORE INTO ${SqliteClauseTranslator.getQueueTableName(_className)} ( \`type\`, \`id\` ) VALUES ( ?, ? )`;
-              const params = ['updated', columns['objectId']];
+              const query = `INSERT OR IGNORE INTO ${SqliteClauseTranslator.getQueueTableName(_className)} ( \`type\`, \`id\`, \`serverUpdateTime\` ) VALUES ( ?, ?, ? )`;
+              const params = ['updated', columns['objectId'], null];
               console.log( query );
               console.log( JSON.stringify( params ) );
               tx.executeSql(query, params);
@@ -433,7 +433,6 @@ export namespace Model {
       }
 
       _removeLocal(){
-
         return new Promise( ( resolve, reject ) => {
           const db = appPot.getLocalDatabase();
           db.transaction((tx)=>{
@@ -446,8 +445,8 @@ export namespace Model {
             console.log(query);
             console.log(params);
             tx.executeSql(query, params, (...args) => {
-              let query = `INSERT OR REPLACE INTO ${SqliteClauseTranslator.getQueueTableName(_className)} ( \`type\`, \`id\` ) VALUES ( ?, ? )`;
-              let params = ['deleted', this.get('objectId')];
+              let query = `INSERT OR REPLACE INTO ${SqliteClauseTranslator.getQueueTableName(_className)} ( \`type\`, \`id\`, \`serverUpdateTime\` ) VALUES ( ?, ?, ? )`;
+              let params = ['deleted', this.get('objectId'), this.get('serverUpdateTime')];
               if(args[1].rows.length > 0 && args[1].rows.item(0).type == 'created'){
                 query = `DELETE FROM ${SqliteClauseTranslator.getQueueTableName(_className)} WHERE id = ?`;
                 params = [this.get('objectId')];
@@ -474,9 +473,7 @@ export namespace Model {
               objectName: _className,
               objectIds: [{
                 objectId: this.get('objectId'),
-                serverUpdateTime: moment(this.get('serverUpdateTime'))
-                  .utcOffset(9)
-                  .format('YYYY-MM-DDTHH:mm:ss.SSSZ')
+                serverUpdateTime: this.get('serverUpdateTime')
               }]
             })
             .end(Ajax.end(resolve, reject));
@@ -496,12 +493,169 @@ export namespace Model {
         return !this._columns['objectId'];
       }
 
+      static countUnsent(){
+        return new Promise( ( resolve, reject ) => {
+          let num = null;
+          const db = appPot.getLocalDatabase();
+          db.transaction((tx)=>{
+            tx.executeSql('SELECT * FROM ' + SqliteClauseTranslator.getQueueTableName(_className), [], (...args) => {
+              num = {
+                created: 0,
+                updated: 0,
+                deleted: 0
+              };
+              for(var i = 0; i < args[1].rows.length; i++){
+                const record = args[1].rows.item(i);
+                num[record.type]++;
+              }
+            });
+          }, (error) => {
+            reject(error);
+          }, () => {
+            resolve(num);
+          });
+        });
+      }
+
+      static getUnsents(){
+        return new Promise( ( resolve, reject ) => {
+          let returnObj = {
+            created: [],
+            updated: [],
+            deleted: []
+          };
+          const db = appPot.getLocalDatabase();
+          db.transaction((tx)=>{
+            tx.executeSql('SELECT * FROM ' + SqliteClauseTranslator.getQueueTableName(_className), [], (...args) => {
+              for(var i = 0; i < args[1].rows.length; i++){
+                const record = args[1].rows.item(i);
+                returnObj[record.type].push({
+                  objectId: record.id,
+                  serverUpdateTime: record.serverUpdateTime
+                });
+              }
+            });
+          }, (error) => {
+            reject();
+          }, () => {
+            resolve(returnObj);
+          });
+        }).then((obj) => {
+          return Promise.all([
+            classList[_className]._selectLocal()
+              .valuesIn('objectId', obj['created'].map(o=>o['objectId']) )
+              .findList(),
+            classList[_className]._selectLocal()
+              .valuesIn('objectId', obj['updated'].map(o=>o['objectId']) )
+              .findList(),
+            Promise.resolve(obj['deleted'])
+          ]);
+        }).then((results) => {
+          return {
+            created: results[0][_className],
+            updated: results[1][_className],
+            deleted: results[2]
+          };
+        });
+      }
+
       static downlink(alias?:string){
         if( ! appPot.isOnline()){
           throw "offline mode";
         }
+        if( appPot.isLocked(_className) ){
+          throw "now locking";
+        }
         return new QueryLimited(appPot, this||classList[_className], alias)
           .setLocalDatabase(appPot.getLocalDatabase());
+      }
+
+      static clearQueue(type){
+        return new Promise( ( resolve, reject ) => {
+          const db = appPot.getLocalDatabase();
+          db.transaction((tx)=>{
+            const query = 'DELETE FROM ' + SqliteClauseTranslator.getQueueTableName(_className) + ' WHERE type = ?';
+            tx.executeSql(query, [type]);
+          }, (error) => {
+            reject(error);
+          }, () => {
+            resolve();
+          });
+        })
+      }
+
+      static uplink(conflict){
+        if( ! appPot.isOnline()){
+          throw "offline mode";
+        }
+        if( appPot.isLocked(_className) ){
+          throw "now locking";
+        }
+
+        if(!conflict){
+          conflict = () => {};
+        }
+        let queueList = null;
+        const conflicted = {
+          update: [],
+          delete: []
+        };
+
+        appPot.lock(_className);
+        return classList[_className].getUnsents().then(results => {
+          queueList = results;
+          return classList[_className]._insertAll( queueList['created'] );
+        }).then(() => {
+          return classList[_className].clearQueue('created');
+        }).then(() => {
+          return Promise.all(
+            queueList['updated'].map(model => {
+              return model.update()
+                .catch(err => {
+                  console.log(err);
+                  //if(err.code == 130){
+                    conflicted['update'].push(model);
+                  //}
+                  //return Promise.reject(err);
+                  return Promise.resolve();
+                });
+            })
+          );
+        }).then(() => {
+          return classList[_className].clearQueue('updated');
+        }).then(() => {
+          return Promise.all(
+            queueList['deleted'].map(obj => {
+              return new Promise( ( resolve, reject ) => {
+                appPot.getAjax().post('data/batch/deleteData')
+                  .send({
+                    objectName: _className,
+                    objectIds: [{
+                      objectId: obj['objectId'],
+                      serverUpdateTime: obj['serverUpdateTime']
+                    }]
+                  }).end(Ajax.end(resolve, reject));
+              }).catch(err => {
+                console.log(err);
+                //if(err.code == 130){
+                  conflicted['delete'].push(obj);
+                //}
+                //return Promise.reject(err);
+                return Promise.resolve();
+              });
+            })
+          );
+        }).then(() => {
+          return classList[_className].clearQueue('deleted');
+        }).then(() => {
+          appPot.unlock(_className);
+          if(conflicted['update'].length != 0 || conflicted['deleted'].length != 0){
+            conflict(conflicted);
+          }
+        }).catch(err => {
+          appPot.unlock(_className);
+          return Promise.reject(err);
+        });
       }
 
       static _debug(){
@@ -577,19 +731,9 @@ export namespace Model {
         return columns;
       }
 
-      static const dateColumns = [
-        'serverUpdateTime',
-        'serverCreateTime'
-      ]
-
       static parseColumns(columns){
         let _columns = {};
         objectAssign(_columns, columns);
-        classList[_className].dateColumns.forEach((val) => {
-          if(!(columns[val] instanceof Date)){
-            _columns[val] = moment(columns[val]).toDate();
-          }
-        });
         Object.keys(modelColumns).forEach((key) => {
           if(columns[key] === null || columns[key] === undefined){
             return;
@@ -629,13 +773,6 @@ export namespace Model {
       static formatColumns(columns, isCreate){
         let _columns = {};
         objectAssign(_columns, columns);
-        classList[_className].dateColumns.forEach((val) => {
-          if((columns[val] instanceof Date)){
-            _columns[val] = moment(columns[val])
-                .utcOffset(9)
-                .format('YYYY-MM-DDTHH:mm:ss.SSSZ');
-          }
-        });
         Object.keys(modelColumns).forEach((key) => {
           if(columns[key] === null || columns[key] === undefined){
             return;
@@ -718,6 +855,7 @@ export namespace Model {
 
     protected _queryObj: any;
     protected _class;
+    protected _appPot;
     protected _ajax: Ajax;
     protected _keyClassMap;
     protected _localDB: any;
@@ -730,6 +868,7 @@ export namespace Model {
           'phyName': this._class.className
         }
       };
+      this._appPot = appPot;
       this._localDB = localDB || false;
       this._useLocal = !!localDB;
       this._ajax = appPot.getAjax();
@@ -1032,12 +1171,15 @@ export namespace Model {
             tx.executeSql(query, params);
           });
         }, (error) => {
+          this._appPot.unlock(this._class.className);
           reject(error);
         }, () => {
+          this._appPot.unlock(this._class.className);
           resolve();
         });
       };
 
+      this._appPot.lock(this._class.className);
       return super.findList()
         .then(results => {
           return new Promise(promiseFunc(results));
