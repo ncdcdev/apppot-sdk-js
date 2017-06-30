@@ -11,6 +11,7 @@ import Device from './device';
 import {getUserClass, GroupsRoles, Role} from './user';
 import {getGroupClass} from './group';
 import {getFileClass} from './file';
+import {getGateway} from './gateway';
 import {DataType} from './types';
 import {Error} from './error';
 import {Promise} from 'es6-promise';
@@ -32,6 +33,7 @@ export class AppPot {
   public GroupsRoles;
   public DataType;
   public Error;
+  public Gateway;
 
   constructor(props?){
     if(!props){
@@ -58,6 +60,7 @@ export class AppPot {
     this['DataType'] = DataType;
     this['Error'] = Error;
     this['Group'] = getGroupClass(this);
+    this['Gateway'] = getGateway(this);
   }
 
   uuid() {

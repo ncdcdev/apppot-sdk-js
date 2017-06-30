@@ -649,7 +649,7 @@ export namespace Model {
           return classList[_className].clearQueue('deleted');
         }).then(() => {
           appPot.unlock(_className);
-          if(conflicted['update'].length != 0 || conflicted['deleted'].length != 0){
+          if(conflicted['update'] && conflicted['update'].length != 0 || conflicted['deleted'] && conflicted['deleted'].length != 0){
             conflict(conflicted);
           }
         }).catch(err => {
