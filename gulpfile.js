@@ -7,6 +7,7 @@ var stripDebug = require('gulp-strip-debug');
 var ejs = require('gulp-ejs');
 var webpack = require('webpack-stream');
 var webpackConfig = require('./webpack.config.js');
+var webpackConfigMin = require('./webpack.config-min.js');
 var del = require('del');
 //var jsdoc = require('gulp-jsdoc');
 //
@@ -28,6 +29,15 @@ gulp.task('sdk', function(){
     .pipe(gulp.dest(outputDir))
 });
 
+gulp.task('sdk-min', function(){
+  return gulp.src([
+      './src/ts/**/*.ts',
+    ])
+    .pipe(plumber())
+    .pipe(webpack(webpackConfigMin))
+    .pipe(gulp.dest(outputDir))
+});
+
 gulp.task('html', function(){
   return gulp.src(['./src/html/**/*.html', '!./ejs/_*.html'])
     .pipe(plumber())
@@ -35,7 +45,7 @@ gulp.task('html', function(){
     .pipe(gulp.dest(outputDir))
 });
 
-gulp.task('build', ['sdk', 'html']);
+gulp.task('build', ['sdk', 'sdk-min', 'html']);
 
 gulp.task('develop', ['sdk', 'html'], function(){
   watch([
