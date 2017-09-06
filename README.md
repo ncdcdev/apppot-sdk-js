@@ -12,7 +12,7 @@ AppPot SDK for JavaScript, available for browsers and smart devices, or Node.js.
 To use the SDK in the browser, add the following script tag to your HTML page
 
 ```html
-<script src="https://raw.githubusercontent.com/NCDCHub/apppot-sdk-js/master/dist/apppot.js"></script>
+<script src="https://cdn.rawgit.com/NCDCHub/apppot-sdk-js/v2.3/dist/apppot.min.js"></script>
 ```
   
 To use in the Node.js, use the [npm](http://npmjs.org) package manager. Type the following into a terminal.
