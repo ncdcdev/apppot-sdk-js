@@ -20,11 +20,7 @@ module.exports = function(config) {
       'dist/apppot.js',
       'spec/config.js',
 
-      //'spec/user_spec.js'
-
-      //'spec/local_*.js'
-      
-      'spec/**/*.js'
+      'spec/**/*_spec.js'
     ],
 
 

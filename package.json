@@ -4,7 +4,8 @@
   "description": "",
   "main": "dist/apppot.js",
   "scripts": {
-    "build": "gulp",
+    "develop": "gulp develop",
+    "build": "gulp build",
     "test": "karma start --browsers PhantomJS_debug --no-single-run",
     "test:ie10": "karma start --browsers 'IE10 - Win7'",
     "test:ie11": "karma start --browsers 'IE11 - Win7'",
