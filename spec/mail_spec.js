@@ -8,7 +8,7 @@ describe('メール送信', function(){
 
   it('メールが送信できる', function(done){
     var self = this;
-    AppPot.sendMail('SES_TEST', 'kano@ncdc.co.jp', ['kano@ncdc.co.jp'], [], [], 'メール送信テスト', 'メール送信テストボディ')
+    AppPot.sendMail('SES_TEST', 'kano@ncdc.co.jp', ['kano@ncdc.co.jp'], [], [], 'メール送信テスト', 'メール送信テストボディ(apppot-sdk-js)')
       .then(function(){
         done();
       });

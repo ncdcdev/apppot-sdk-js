@@ -90,6 +90,15 @@ describe('Modelのテスト', function(){
     });
   });
 
+  it('countでレコードの件数を取得できる', function(done){
+    var self = this;
+    TaskModel.count().then(function(models){
+      expect(models instanceof Object).toBeTruthy();
+      expect(models.count).toBe(20);
+      done();
+    })
+  })
+
   it('インスタンスメソッドのinsertからinsertできる', function(done){
     var self = this;
     var task = new TaskModel({
