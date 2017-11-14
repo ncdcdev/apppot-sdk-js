@@ -52,7 +52,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
 	/// <reference path="../../typings/index.d.ts" />
@@ -147,7 +147,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._localDb;
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1504676687) || "unknown";
+	        return (1510554447) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
 	        return (["2","3","28"]).join('.') || "unknown";
@@ -239,9 +239,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	;
 
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	"use strict";
 	var Config = (function () {
@@ -324,9 +324,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.Config = Config;
 
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var objectAssign = __webpack_require__(3);
@@ -377,9 +377,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.AuthInfo = AuthInfo;
 
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/*
 	object-assign
@@ -473,9 +473,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var superagent = __webpack_require__(5);
@@ -583,9 +583,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.Ajax = Ajax;
 
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * Module dependencies.
@@ -1666,9 +1666,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	
 	/**
@@ -1835,9 +1835,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	
 	/**
@@ -1864,9 +1864,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return curr;
 	};
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * Module of mixed-in functions shared between node and client code
@@ -2036,9 +2036,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 9 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/**
 	 * Check if `obj` is an object.
@@ -2055,9 +2055,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = isObject;
 
 
-/***/ },
+/***/ }),
 /* 10 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// The node and browser modules expose versions of this with the
 	// appropriate constructor function bound as first argument
@@ -2093,9 +2093,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = request;
 
 
-/***/ },
+/***/ }),
 /* 11 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	"use strict";
 	var Error = (function () {
@@ -2122,9 +2122,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.Error = Error;
 
 
-/***/ },
+/***/ }),
 /* 12 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var ajax_1 = __webpack_require__(4);
@@ -2230,9 +2230,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.LocalAuthenticator = LocalAuthenticator;
 
 
-/***/ },
+/***/ }),
 /* 13 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var require;/* WEBPACK VAR INJECTION */(function(process, global) {/*!
 	 * @overview es6-promise - a tiny implementation of Promises/A+.
@@ -3390,9 +3390,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	//# sourceMappingURL=es6-promise.map
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14), (function() { return this; }())))
 
-/***/ },
+/***/ }),
 /* 14 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// shim for using process in browser
 	var process = module.exports = {};
@@ -3564,6 +3564,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	process.removeListener = noop;
 	process.removeAllListeners = noop;
 	process.emit = noop;
+	process.prependListener = noop;
+	process.prependOnceListener = noop;
+
+	process.listeners = function (name) { return [] }
 
 	process.binding = function (name) {
 	    throw new Error('process.binding is not supported');
@@ -3576,15 +3580,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	process.umask = function() { return 0; };
 
 
-/***/ },
+/***/ }),
 /* 15 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/* (ignored) */
 
-/***/ },
+/***/ }),
 /* 16 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var types_1 = __webpack_require__(17);
@@ -3755,9 +3759,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.Database = Database;
 
 
-/***/ },
+/***/ }),
 /* 17 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	"use strict";
 	(function (DataType) {
@@ -3771,9 +3775,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	var DataType = exports.DataType;
 
 
-/***/ },
+/***/ }),
 /* 18 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var __extends = (this && this.__extends) || function (d, b) {
@@ -4054,6 +4058,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                else {
 	                    return classList[_className]._selectLocal(alias);
+	                }
+	            };
+	            ModelClass.count = function (alias) {
+	                if (appPot.isOnline()) {
+	                    return classList[_className].select().count(alias);
+	                }
+	                else {
+	                    return classList[_className]._selectLocal().countLocal(alias);
 	                }
 	            };
 	            ModelClass.prototype._insertLocal = function () {
@@ -4866,6 +4878,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return ret;
 	            });
 	        };
+	        Query.prototype.count = function () {
+	            return this._post(true)
+	                .then(function (obj) {
+	                return obj;
+	            });
+	        };
 	        Query.prototype._queryToLocal = function () {
 	            var _this = this;
 	            console.log('_queryToLocal');
@@ -4919,10 +4937,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return returnObject;
 	            });
 	        };
-	        Query.prototype._post = function () {
+	        Query.prototype._post = function (isCount) {
 	            var _this = this;
+	            if (isCount === void 0) { isCount = false; }
+	            var count = "";
+	            if (isCount) {
+	                count = "/count";
+	            }
 	            var func = function (resolve, reject) {
-	                _this._ajax.post("data/query/" + _this._class.className)
+	                _this._ajax.post("data/query/" + _this._class.className + count)
 	                    .send(_this._queryObj)
 	                    .end(ajax_1.Ajax.end(resolve, function (err) {
 	                    if (err.response && err.response.statusCode == 404) {
@@ -5006,9 +5029,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	})(Model = exports.Model || (exports.Model = {}));
 
 
-/***/ },
+/***/ }),
 /* 19 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	"use strict";
 	var SqliteClauseTranslator = (function () {
@@ -5117,9 +5140,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = SqliteClauseTranslator;
 
 
-/***/ },
+/***/ }),
 /* 20 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	"use strict";
 	var Device = (function () {
@@ -5171,9 +5194,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Device;
 
 
-/***/ },
+/***/ }),
 /* 21 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var ajax_1 = __webpack_require__(4);
@@ -5468,9 +5491,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.GroupsRoles = GroupsRoles;
 
 
-/***/ },
+/***/ }),
 /* 22 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var ajax_1 = __webpack_require__(4);
@@ -5576,9 +5599,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.getGroupClass = getGroupClass;
 
 
-/***/ },
+/***/ }),
 /* 23 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var ajax_1 = __webpack_require__(4);
@@ -5668,9 +5691,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.getFileClass = getFileClass;
 
 
-/***/ },
+/***/ }),
 /* 24 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
 	var es6_promise_1 = __webpack_require__(13);
@@ -5730,7 +5753,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.getGateway = getGateway;
 
 
-/***/ }
+/***/ })
 /******/ ])
 });
 ;

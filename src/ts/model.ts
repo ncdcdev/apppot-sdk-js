@@ -305,6 +305,10 @@ export namespace Model {
         }
       }
 
+      static count(alias?:string) {
+        return classList[_className].select().count(alias);
+      }
+
       _insertLocal(...args){
         this.set.apply(this, args);
         if(!this.isNew()){
@@ -1053,6 +1057,13 @@ export namespace Model {
         });
     }
 
+    count() {
+      return this._post(true)
+        .then((obj) => {
+          return obj;
+        })
+    }
+
     private _queryToLocal(){
       console.log('_queryToLocal');
       return (new Promise( (resolve, reject) => {
@@ -1101,9 +1112,13 @@ export namespace Model {
       });
     }
 
-    private _post(){
+    private _post(isCount=false){
+      let count = "";
+      if (isCount) {
+        count = "/count";
+      }
       const func = (resolve, reject) => {
-          this._ajax.post(`data/query/${this._class.className}`)
+          this._ajax.post(`data/query/${this._class.className}${count}`)
             .send(this._queryObj)
             .end(Ajax.end(resolve, (err)=>{
               if(err.response && err.response.statusCode == 404){
