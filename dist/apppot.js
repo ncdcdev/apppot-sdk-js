@@ -147,10 +147,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._localDb;
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1510554447) || "unknown";
+	        return (1510644192) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","28"]).join('.') || "unknown";
+	        return (["2","3","29"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -4061,12 +4061,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            };
 	            ModelClass.count = function (alias) {
-	                if (appPot.isOnline()) {
-	                    return classList[_className].select().count(alias);
-	                }
-	                else {
-	                    return classList[_className]._selectLocal().countLocal(alias);
-	                }
+	                return classList[_className].select().count(alias);
 	            };
 	            ModelClass.prototype._insertLocal = function () {
 	                var _this = this;

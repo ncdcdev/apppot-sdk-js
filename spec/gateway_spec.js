@@ -28,6 +28,8 @@ describe('GatewayAPI', function(){
       }).then(function(json){
         expect(json instanceof Object).toBeTruthy();
         done();
+      }).catch(function(err){
+        done.fail(JSON.stringify(err));
       });
   });
 
@@ -39,6 +41,8 @@ describe('GatewayAPI', function(){
       .then(function(json){
         expect(json instanceof Object).toBeTruthy();
         done();
+      }).catch(function(err){
+        done.fail(JSON.stringify(err));
       });
   });
 
@@ -46,32 +50,37 @@ describe('GatewayAPI', function(){
     var self = this;
     AppPot.Gateway.get(serviceName, tableName, {
         "BUILDINGID":"NCDC00001",
-      }, null, { original: false })
-      .then(function(json){
-        expect(json instanceof Object).toBeTruthy();
-        done();
-      });
+    }, null, { original: false })
+    .then(function(json){
+      expect(json instanceof Object).toBeTruthy();
+      done();
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
+    });
   });
 
   it('get 連携先のデータそのまま', function(done){
     var self = this;
     AppPot.Gateway.get(serviceName, tableName, {
-        "BUILDINGID":"NCDC00001",
-      }, null, { original: true })
-      .then(function(result){
-        done();
-      });
+      "BUILDINGID":"NCDC00001",
+    }, null, { original: true })
+    .then(function(result){
+      done();
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
+    });
   });
 
   it('get select文を発行し、データを取得できる', function(done){
     var self = this;
     AppPot.Gateway.get(serviceName, 'query', {
       query: "select BUILDINGID, BUILDINGNAME from Building where BUILDINGNAME like 'NCDC%'"
-    })
-      .then(function(json){
-        expect(json instanceof Object).toBeTruthy();
-        done();
-      });
+    }).then(function(json){
+      expect(json instanceof Object).toBeTruthy();
+      done();
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
+    });
   });
 
   it('putでデータを更新できる', function(done){
@@ -81,24 +90,25 @@ describe('GatewayAPI', function(){
       "BUILDINGNAME":"NCDC00001",
       "CREATEDDATE":"2017/01/01 09:10",
       "UPDATEDATE":"2017/01/01 09:10"
-    })
-      .then(function(json){
-        expect(json instanceof Object).toBeTruthy();
-        return AppPot.Gateway.put(serviceName, tableName, {
-          "BUILDINGID":"00002",
-        }, {
-          "BUILDINGNAME":"NCDC00002",
-        });
-      }).then(function(json){
-        expect(json instanceof Object).toBeTruthy();
-        return AppPot.Gateway.get(serviceName, tableName, {
-          "BUILDINGID":"00002",
-        });
-      }).then(function(json){
-        expect(json instanceof Object).toBeTruthy();
-        expect(json['BUILDINGNAME']).toEqual('00002');
-        done();
+    }).then(function(json){
+      expect(json instanceof Object).toBeTruthy();
+      return AppPot.Gateway.put(serviceName, tableName, {
+        "BUILDINGID":"00002",
+      }, {
+        "BUILDINGNAME":"NCDC00002",
       });
+    }).then(function(json){
+      expect(json instanceof Object).toBeTruthy();
+      return AppPot.Gateway.get(serviceName, tableName, {
+        "BUILDINGID":"00002",
+      });
+    }).then(function(json){
+      expect(json instanceof Object).toBeTruthy();
+      expect(json['BUILDINGNAME']).toEqual('00002');
+      done();
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
+    });
   });
 
   it('removeで削除できる', function(done){
@@ -106,8 +116,10 @@ describe('GatewayAPI', function(){
     AppPot.Gateway.remove(serviceName, tableName, {
         "BUILDINGID":"NCDC00001",
     }).then(function(json){
-        expect(json instanceof Object).toBeTruthy();
-        done();
-      });
+      expect(json instanceof Object).toBeTruthy();
+      done();
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
+    });
   });
 });

@@ -47,7 +47,7 @@ describe('複数取得のテスト', function(){
     })
     .then(function(){
       var models = [];
-      for(var i = 0; i < self.numOfTask; i++){
+      for(var i = 0; i < (self.numOfTask - self.numOfPlace); i++){
         var index = leftPad(i+1, 2);
         models.push(
           new TaskModel({
@@ -55,6 +55,18 @@ describe('複数取得のテスト', function(){
             description: 'test-descriptions' + index,
             limit: self.numOfTask-i,
             placeId: self.placeIds[i%self.numOfPlace]
+          })
+        )
+      }
+      for(var i = (self.numOfTask - self.numOfPlace); i < self.numOfTask; i++){
+        var index = leftPad(i+1, 2);
+        models.push(
+          new TaskModel({
+            title: 'select_spec' + index,
+            description: 'test-descriptions' + index,
+            limit: self.numOfTask-i,
+            //placeId: self.placeIds[i%self.numOfPlace]
+            placeId: null
           })
         )
       }
@@ -88,13 +100,14 @@ describe('複数取得のテスト', function(){
 
   it('where条件を指定して、レコードを取得できる', function(done){
     var limitCondition = 5;
+    var count = 5;
     TaskModel.select()
     .where('#Task.limit <= ?', limitCondition)
     .findList()
     .then(function(models){
       expect(models instanceof Object).toBeTruthy();
       expect(models['Task'] instanceof Array).toBeTruthy();
-      expect(models['Task'].length).toBe(limitCondition);
+      expect(models['Task'].length).toBe(count);
       done();
     });
   });
@@ -117,9 +130,10 @@ describe('複数取得のテスト', function(){
     });
   });
 
-  it('whereとjoinを指定して、複数テーブルのレコードを取得できる', function(done){
+  it('whereとjoinを指定して、複数テーブルのレコードを取得できる。（絞込パターン）', function(done){
     var self = this;
     var limitCondition = 5;
+    var count = 5;
     TaskModel.select()
     .join(PlaceModel, '#Place.objectId = #Task.placeId')
     .where('#Task.limit <= ?', limitCondition)
@@ -127,19 +141,43 @@ describe('複数取得のテスト', function(){
     .then(function(models){
       expect(models instanceof Object).toBeTruthy();
       expect(models['Task'] instanceof Array).toBeTruthy();
-      expect(models['Task'].length).toBe(limitCondition);
+      expect(models['Task'].length).toBe(count);
       expect(models['Place'] instanceof Array).toBeTruthy();
-      expect(models['Place'].length).toBe(limitCondition);
-      for(var i = 0; i < limitCondition; i++){
+      expect(models['Place'].length).toBe(count);
+      for(var i = 0; i < count; i++){
         expect(models['Task'][i].get('placeId')).toBe(models['Place'][i].get('objectId'));
       }
       done();
     });
   });
 
+  it('whereとjoinを指定して、複数テーブルのレコードを取得できる。（発散パターン）', function(done){
+    var self = this;
+    var limitCondition = 10;
+    var count = 5;
+    AppPot.log('Where and Join (divergence)').then(function(){
+      return PlaceModel.select()
+      .join(TaskModel, '#Place.objectId = #Task.placeId')
+      .where('#Task.limit <= ?', limitCondition)
+      .findList()
+      .then(function(models){
+        expect(models instanceof Object).toBeTruthy();
+        expect(models['Task'] instanceof Array).toBeTruthy();
+        expect(models['Task'].length).toBe(count);
+        expect(models['Place'] instanceof Array).toBeTruthy();
+        expect(models['Place'].length).toBe(count);
+        for(var i = 0; i < count; i++){
+          expect(models['Task'][i].get('placeId')).toBe(models['Place'][i].get('objectId'));
+        }
+        done();
+      })
+    }).then(function(){return AppPot.log('End')});
+  });
+
   it('joinでaliasを指定できる', function(done){
     var self = this;
     var limitCondition = 5;
+    var count = 5;
     TaskModel.select()
     .join(PlaceModel, {alias:'p'}, '#p.objectId = #Task.placeId')
     .where('#Task.limit <= ?', limitCondition)
@@ -147,14 +185,61 @@ describe('複数取得のテスト', function(){
     .then(function(models){
       expect(models instanceof Object).toBeTruthy();
       expect(models['Task'] instanceof Array).toBeTruthy();
-      expect(models['Task'].length).toBe(limitCondition);
+      expect(models['Task'].length).toBe(count);
       expect(models['p'] instanceof Array).toBeTruthy();
-      expect(models['p'].length).toBe(limitCondition);
-      for(var i = 0; i < limitCondition; i++){
+      expect(models['p'].length).toBe(count);
+      for(var i = 0; i < count; i++){
         expect(models['Task'][i].get('placeId')).toBe(models['p'][i].get('objectId'));
       }
       done();
     });
+  });
+
+  it('LeftOuterJoinを指定して、複数テーブルのレコードを取得できる（絞込パターン）', function(done){
+    var self = this;
+    var limitCondition = 10;
+    var count = 10;
+    AppPot.log('Left outer join(convergence)').then(function(){
+      return TaskModel.select()
+      .join(PlaceModel, AppPot.Model.JoinType.LeftOuter, '#Task.placeId = #Place.objectId')
+      .where('#Task.limit <= ?', limitCondition)
+      .findList()
+      .then(function(models){
+        expect(models instanceof Object).toBeTruthy();
+        expect(models['Task'] instanceof Array).toBeTruthy();
+        expect(models['Task'].length).toBe(count);
+        expect(models['Place'] instanceof Array).toBeTruthy();
+        expect(models['Place'].length).toBe(count);
+        for(var i = 0; i < count; i++){
+          expect(models['Task'][i].get('placeId')).toBe(models['Place'][i].get('objectId'));
+        }
+        done();
+      })
+    }).then(function(){return AppPot.log('End')});
+  });
+
+  it('LeftOuterJoinを指定して、複数テーブルのレコードを取得できる（発散パターン）', function(done){
+    var self = this;
+    var limitCondition = 10;
+    var count = 5;
+
+    AppPot.log('Left outer join(divergence)').then(function(){
+      return PlaceModel.select()
+      .join(TaskModel, AppPot.Model.JoinType.LeftOuter, '#Task.placeId = #Place.objectId')
+      .where('#Task.limit <= ?', limitCondition)
+      .findList()
+      .then(function(models){
+        expect(models instanceof Object).toBeTruthy();
+        expect(models['Task'] instanceof Array).toBeTruthy();
+        expect(models['Task'].length).toBe(count);
+        expect(models['Place'] instanceof Array).toBeTruthy();
+        expect(models['Place'].length).toBe(count);
+        for(var i = 0; i < count; i++){
+          expect(models['Task'][i].get('placeId')).toBe(models['Place'][i].get('objectId'));
+        }
+        done();
+      })
+    }).then(function(){return AppPot.log('End')});
   });
 
   it('orderByを使用し、整列されたレコードを取得できる(順序未指定)', function(done){
