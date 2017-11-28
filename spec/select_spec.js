@@ -112,6 +112,51 @@ describe('複数取得のテスト', function(){
     });
   });
 
+  it('IN条件を指定して、レコードを取得できる', function(done){
+    var count = 5;
+    TaskModel.select()
+    .valuesIn('limit', ['1', '2', '3', '4', '5'])
+    .findList()
+    .then(function(models){
+      expect(models instanceof Object).toBeTruthy();
+      expect(models['Task'] instanceof Array).toBeTruthy();
+      expect(models['Task'].length).toBe(count);
+      done();
+    });
+  });
+
+  it('INとwhere条件をandでつなげて指定して、レコードを取得できる', function(done){
+    var count = 5;
+    var limitCondition = 5;
+    TaskModel.select()
+    .valuesIn('limit', ['1', '2', '3', '4', '5', '6', '7', '8'])
+    .and()
+    .where('#Task.limit <= ?', limitCondition)
+    .findList()
+    .then(function(models){
+      expect(models instanceof Object).toBeTruthy();
+      expect(models['Task'] instanceof Array).toBeTruthy();
+      expect(models['Task'].length).toBe(count);
+      done();
+    });
+  });
+
+  it('INとwhere条件をorでつなげて指定して、レコードを取得できる', function(done){
+    var count = 5;
+    var limitCondition = 3;
+    TaskModel.select()
+    .valuesIn('limit', ['4', '5'])
+    .or()
+    .where('#Task.limit <= ?', limitCondition)
+    .findList()
+    .then(function(models){
+      expect(models instanceof Object).toBeTruthy();
+      expect(models['Task'] instanceof Array).toBeTruthy();
+      expect(models['Task'].length).toBe(count);
+      done();
+    });
+  });
+
   it('joinを指定して、複数テーブルのレコードを取得できる', function(done){
     var self = this;
     TaskModel.select()

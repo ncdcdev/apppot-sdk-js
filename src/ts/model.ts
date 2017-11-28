@@ -17,11 +17,16 @@ export namespace Model {
 
     constructor(...args){
       let params;
-      if(args.length == 1 &&
-         args[0] instanceof Array){
+      if(args[0] instanceof Array){
+        // クエリ文字列とパラメータが配列で渡された時
         this._query = args[0][0];
         params = args[0].slice(1);
+      }else if(typeof args[0].source == 'string'){
+        // queryオブジェクトの、where.expressionが渡された時
+        this._query = args[0].source;
+        params = args[0].params || [];
       }else{
+        // クエリ文字列とパラメータが別々の引数で渡された時
         this._query = args[0];
         params = args.slice(1);
       }
@@ -38,6 +43,18 @@ export namespace Model {
       };
       if(this._params){
         qobj['params'] = this._params;
+      }
+      return qobj;
+    }
+
+    concatBy(andor, exp){
+      const query = exp.getQuery();
+      let qobj = {
+        'source': `( ${this._query} ) ${andor} ( ${query.source} )`
+      };
+      const params = [].concat(this._params||[], query.params||[]);
+      if(params.length > 0){
+        qobj['params'] = params;
       }
       return qobj;
     }
@@ -164,20 +181,15 @@ export namespace Model {
             records.forEach( (record, idx) => {
               const escapedColNames = colNames.map(name => "`"+name+"`");
               const query = `INSERT INTO ${_className} ( ${escapedColNames.join(',')} ) VALUES ( ${placeholders.join(',')} )`;
-              console.log( query );
-              console.log( JSON.stringify( record ) );
               tx.executeSql(query, record, () => {
                 const query = `INSERT INTO ${SqliteClauseTranslator.getQueueTableName(_className)} ( \`type\`, \`id\`, \`serverUpdateTime\` ) VALUES ( ?, ?, ? )`;
                 const params = ['created', objectIds[idx], null];
-                console.log( query );
-                console.log( JSON.stringify( params ) );
                 tx.executeSql(query, params);
               });
             });
           }, (error) => {
             reject(error);
           }, () => {
-            console.log('success');
             resolve(models);
           });
         });
@@ -234,13 +246,10 @@ export namespace Model {
       }
 
       static _findByIdLocal(id:string){
-        console.log('findbyidlocal id: ' + id);
         return classList[_className]._selectLocal()
           .where('objectId = ?', id)
           .findOne()
           .then(obj => {
-            console.log('findbyidlocal');
-            console.log(obj);
             if(!obj[_className]) {
               return Promise.reject('not found');
             }
@@ -360,19 +369,14 @@ export namespace Model {
         return new Promise( ( resolve, reject ) => {
           const db = appPot.getLocalDatabase();
           db.transaction((tx)=>{
-            console.log(queryObj.query);
-            console.log(queryObj.params);
             tx.executeSql(queryObj.query, queryObj.params, (...args) => {
               const query = `INSERT OR IGNORE INTO ${SqliteClauseTranslator.getQueueTableName(_className)} ( \`type\`, \`id\`, \`serverUpdateTime\` ) VALUES ( ?, ?, ? )`;
               const params = ['updated', columns['objectId'], null];
-              console.log( query );
-              console.log( JSON.stringify( params ) );
               tx.executeSql(query, params);
             });
           }, (error) => {
             reject(error);
           }, () => {
-            console.log('success');
             resolve(this);
           });
         });
@@ -441,13 +445,9 @@ export namespace Model {
           const db = appPot.getLocalDatabase();
           db.transaction((tx)=>{
             const queryObj = (new SqliteClauseTranslator()).translateDelete(_className, this.get('objectId'));
-            console.log(queryObj.query);
-            console.log(queryObj.params);
             tx.executeSql(queryObj.query, queryObj.params);
             const query = `SELECT type FROM ${SqliteClauseTranslator.getQueueTableName(_className)} WHERE id = ?`
             const params = [this.get('objectId')];
-            console.log(query);
-            console.log(params);
             tx.executeSql(query, params, (...args) => {
               let query = `INSERT OR REPLACE INTO ${SqliteClauseTranslator.getQueueTableName(_className)} ( \`type\`, \`id\`, \`serverUpdateTime\` ) VALUES ( ?, ?, ? )`;
               let params = ['deleted', this.get('objectId'), this.get('serverUpdateTime')];
@@ -455,8 +455,6 @@ export namespace Model {
                 query = `DELETE FROM ${SqliteClauseTranslator.getQueueTableName(_className)} WHERE id = ?`;
                 params = [this.get('objectId')];
               }
-              console.log(query);
-              console.log(params);
               tx.executeSql(query, params);
             });
           }, (error) => {
@@ -464,7 +462,6 @@ export namespace Model {
             console.log(error);
             reject(error);
           }, () => {
-            console.log('success');
             resolve(true);
           });
         });
@@ -680,7 +677,6 @@ export namespace Model {
           }, (error) => {
             reject(error);
           }, () => {
-            console.log('success');
             resolve(returnArray);
           });
         });
@@ -864,6 +860,7 @@ export namespace Model {
     protected _keyClassMap;
     protected _localDB: any;
     protected _useLocal: Boolean;
+    protected _concat: string;
 
     constructor(appPot:AppPot, classObj, alias?:string, localDB?:any){
       this._class = classObj;
@@ -906,19 +903,36 @@ export namespace Model {
       const exp = this.normalizeExpression([
         query, ...values
       ]);
-      if(!this._queryObj['where']){
-        this._queryObj['where'] = {};
-      }
-      this._queryObj['where']['expression'] = exp.getQuery();
+      this.setWhereExpression(exp);
       return this;
     }
 
     where(...args){
       const exp = this.normalizeExpression(args);
+      this.setWhereExpression(exp);
+      return this;
+    }
+
+    setWhereExpression(exp:Expression){
       if(!this._queryObj['where']){
         this._queryObj['where'] = {};
-      }
       this._queryObj['where']['expression'] = exp.getQuery();
+      }else if(this._concat){
+        const nextExp = new Expression(this._queryObj['where']['expression']);
+        this._queryObj['where']['expression'] = nextExp.concatBy(this._concat, exp);
+        this._concat = null;
+      }else{
+        throw 'Multiple WHERE condition in not set and/or';
+      }
+    }
+
+    and(){
+      this._concat = 'AND';
+      return this;
+    }
+
+    or(){
+      this._concat = 'OR';
       return this;
     }
 
@@ -1065,7 +1079,6 @@ export namespace Model {
     }
 
     private _queryToLocal(){
-      console.log('_queryToLocal');
       return (new Promise( (resolve, reject) => {
         const queryObj = (new SqliteClauseTranslator()).translateSelect( this._queryObj, this._keyClassMap, classList);
         if(!this._localDB){
@@ -1073,8 +1086,6 @@ export namespace Model {
         }
         let returnArray = [];
         this._localDB.transaction((tx)=>{
-          console.log(queryObj.query);
-          console.log(queryObj.params);
           tx.executeSql(queryObj.query, queryObj.params, (...args) => {
             for(var i = 0; i < args[1].rows.length; i++){
               returnArray.push(args[1].rows.item(i));
@@ -1083,7 +1094,6 @@ export namespace Model {
         }, (error) => {
           reject(error);
         }, () => {
-          console.log('success');
           resolve(returnArray);
         });
       })).then( (records:Object[]) => {
@@ -1167,22 +1177,17 @@ export namespace Model {
           const createTables = Database.getSqliteTableDefinition(this._class);
 
           createTables.forEach(table => {
-            console.log(table);
             tx.executeSql(table);
           });
 
-          console.log(`DELETE FROM ${className}`);
           tx.executeSql(`DELETE FROM ${className}`);
-          console.log(`DELETE FROM ${SqliteClauseTranslator.getQueueTableName(className)}`);
           tx.executeSql(`DELETE FROM ${SqliteClauseTranslator.getQueueTableName(className)}`);
 
           const query = `INSERT INTO ${className} (${escapedColNames.join(',')}) VALUES (${placeholders.join(',')});`
-          console.log(query);
           results[className].forEach( model => {
             const params = colNames.map( key => {
               return model.get(key);
             });
-            console.log(params);
             tx.executeSql(query, params);
           });
         }, (error) => {

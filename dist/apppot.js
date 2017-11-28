@@ -147,10 +147,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._localDb;
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1510644192) || "unknown";
+	        return (1511847659) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","29"]).join('.') || "unknown";
+	        return (["2","3","30"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -3801,12 +3801,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	                args[_i - 0] = arguments[_i];
 	            }
 	            var params;
-	            if (args.length == 1 &&
-	                args[0] instanceof Array) {
+	            if (args[0] instanceof Array) {
+	                // クエリ文字列とパラメータが配列で渡された時
 	                this._query = args[0][0];
 	                params = args[0].slice(1);
 	            }
+	            else if (typeof args[0].source == 'string') {
+	                // queryオブジェクトの、where.expressionが渡された時
+	                this._query = args[0].source;
+	                params = args[0].params || [];
+	            }
 	            else {
+	                // クエリ文字列とパラメータが別々の引数で渡された時
 	                this._query = args[0];
 	                params = args.slice(1);
 	            }
@@ -3823,6 +3829,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	            };
 	            if (this._params) {
 	                qobj['params'] = this._params;
+	            }
+	            return qobj;
+	        };
+	        Expression.prototype.concatBy = function (andor, exp) {
+	            var query = exp.getQuery();
+	            var qobj = {
+	                'source': "( " + this._query + " ) " + andor + " ( " + query.source + " )"
+	            };
+	            var params = [].concat(this._params || [], query.params || []);
+	            if (params.length > 0) {
+	                qobj['params'] = params;
 	            }
 	            return qobj;
 	        };
@@ -3932,20 +3949,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        records.forEach(function (record, idx) {
 	                            var escapedColNames = colNames.map(function (name) { return "`" + name + "`"; });
 	                            var query = "INSERT INTO " + _className + " ( " + escapedColNames.join(',') + " ) VALUES ( " + placeholders.join(',') + " )";
-	                            console.log(query);
-	                            console.log(JSON.stringify(record));
 	                            tx.executeSql(query, record, function () {
 	                                var query = "INSERT INTO " + sqlite_clause_translator_ts_1.default.getQueueTableName(_className) + " ( `type`, `id`, `serverUpdateTime` ) VALUES ( ?, ?, ? )";
 	                                var params = ['created', objectIds[idx], null];
-	                                console.log(query);
-	                                console.log(JSON.stringify(params));
 	                                tx.executeSql(query, params);
 	                            });
 	                        });
 	                    }, function (error) {
 	                        reject(error);
 	                    }, function () {
-	                        console.log('success');
 	                        resolve(models);
 	                    });
 	                });
@@ -3994,13 +4006,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            };
 	            ModelClass._findByIdLocal = function (id) {
-	                console.log('findbyidlocal id: ' + id);
 	                return classList[_className]._selectLocal()
 	                    .where('objectId = ?', id)
 	                    .findOne()
 	                    .then(function (obj) {
-	                    console.log('findbyidlocal');
-	                    console.log(obj);
 	                    if (!obj[_className]) {
 	                        return es6_promise_1.Promise.reject('not found');
 	                    }
@@ -4129,8 +4138,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return new es6_promise_1.Promise(function (resolve, reject) {
 	                    var db = appPot.getLocalDatabase();
 	                    db.transaction(function (tx) {
-	                        console.log(queryObj.query);
-	                        console.log(queryObj.params);
 	                        tx.executeSql(queryObj.query, queryObj.params, function () {
 	                            var args = [];
 	                            for (var _i = 0; _i < arguments.length; _i++) {
@@ -4138,14 +4145,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            }
 	                            var query = "INSERT OR IGNORE INTO " + sqlite_clause_translator_ts_1.default.getQueueTableName(_className) + " ( `type`, `id`, `serverUpdateTime` ) VALUES ( ?, ?, ? )";
 	                            var params = ['updated', columns['objectId'], null];
-	                            console.log(query);
-	                            console.log(JSON.stringify(params));
 	                            tx.executeSql(query, params);
 	                        });
 	                    }, function (error) {
 	                        reject(error);
 	                    }, function () {
-	                        console.log('success');
 	                        resolve(_this);
 	                    });
 	                });
@@ -4233,13 +4237,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    var db = appPot.getLocalDatabase();
 	                    db.transaction(function (tx) {
 	                        var queryObj = (new sqlite_clause_translator_ts_1.default()).translateDelete(_className, _this.get('objectId'));
-	                        console.log(queryObj.query);
-	                        console.log(queryObj.params);
 	                        tx.executeSql(queryObj.query, queryObj.params);
 	                        var query = "SELECT type FROM " + sqlite_clause_translator_ts_1.default.getQueueTableName(_className) + " WHERE id = ?";
 	                        var params = [_this.get('objectId')];
-	                        console.log(query);
-	                        console.log(params);
 	                        tx.executeSql(query, params, function () {
 	                            var args = [];
 	                            for (var _i = 0; _i < arguments.length; _i++) {
@@ -4251,8 +4251,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                query = "DELETE FROM " + sqlite_clause_translator_ts_1.default.getQueueTableName(_className) + " WHERE id = ?";
 	                                params = [_this.get('objectId')];
 	                            }
-	                            console.log(query);
-	                            console.log(params);
 	                            tx.executeSql(query, params);
 	                        });
 	                    }, function (error) {
@@ -4260,7 +4258,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        console.log(error);
 	                        reject(error);
 	                    }, function () {
-	                        console.log('success');
 	                        resolve(true);
 	                    });
 	                });
@@ -4479,7 +4476,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }, function (error) {
 	                        reject(error);
 	                    }, function () {
-	                        console.log('success');
 	                        resolve(returnArray);
 	                    });
 	                });
@@ -4710,10 +4706,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var exp = this.normalizeExpression([
 	                query
 	            ].concat(values));
-	            if (!this._queryObj['where']) {
-	                this._queryObj['where'] = {};
-	            }
-	            this._queryObj['where']['expression'] = exp.getQuery();
+	            this.setWhereExpression(exp);
 	            return this;
 	        };
 	        Query.prototype.where = function () {
@@ -4722,10 +4715,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	                args[_i - 0] = arguments[_i];
 	            }
 	            var exp = this.normalizeExpression(args);
+	            this.setWhereExpression(exp);
+	            return this;
+	        };
+	        Query.prototype.setWhereExpression = function (exp) {
 	            if (!this._queryObj['where']) {
 	                this._queryObj['where'] = {};
+	                this._queryObj['where']['expression'] = exp.getQuery();
 	            }
-	            this._queryObj['where']['expression'] = exp.getQuery();
+	            else if (this._concat) {
+	                var nextExp = new Expression(this._queryObj['where']['expression']);
+	                this._queryObj['where']['expression'] = nextExp.concatBy(this._concat, exp);
+	                this._concat = null;
+	            }
+	            else {
+	                throw 'Multiple WHERE condition in not set and/or';
+	            }
+	        };
+	        Query.prototype.and = function () {
+	            this._concat = 'AND';
+	            return this;
+	        };
+	        Query.prototype.or = function () {
+	            this._concat = 'OR';
 	            return this;
 	        };
 	        Query.prototype.join = function (modelClass) {
@@ -4881,7 +4893,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	        Query.prototype._queryToLocal = function () {
 	            var _this = this;
-	            console.log('_queryToLocal');
 	            return (new es6_promise_1.Promise(function (resolve, reject) {
 	                var queryObj = (new sqlite_clause_translator_ts_1.default()).translateSelect(_this._queryObj, _this._keyClassMap, classList);
 	                if (!_this._localDB) {
@@ -4889,8 +4900,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                var returnArray = [];
 	                _this._localDB.transaction(function (tx) {
-	                    console.log(queryObj.query);
-	                    console.log(queryObj.params);
 	                    tx.executeSql(queryObj.query, queryObj.params, function () {
 	                        var args = [];
 	                        for (var _i = 0; _i < arguments.length; _i++) {
@@ -4903,7 +4912,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }, function (error) {
 	                    reject(error);
 	                }, function () {
-	                    console.log('success');
 	                    resolve(returnArray);
 	                });
 	            })).then(function (records) {
@@ -4989,20 +4997,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    var escapedColNames = colNames.map(function (c) { return '`' + c + '`'; });
 	                    var createTables = database_1.Database.getSqliteTableDefinition(_this._class);
 	                    createTables.forEach(function (table) {
-	                        console.log(table);
 	                        tx.executeSql(table);
 	                    });
-	                    console.log("DELETE FROM " + className);
 	                    tx.executeSql("DELETE FROM " + className);
-	                    console.log("DELETE FROM " + sqlite_clause_translator_ts_1.default.getQueueTableName(className));
 	                    tx.executeSql("DELETE FROM " + sqlite_clause_translator_ts_1.default.getQueueTableName(className));
 	                    var query = "INSERT INTO " + className + " (" + escapedColNames.join(',') + ") VALUES (" + placeholders.join(',') + ");";
-	                    console.log(query);
 	                    results[className].forEach(function (model) {
 	                        var params = colNames.map(function (key) {
 	                            return model.get(key);
 	                        });
-	                        console.log(params);
 	                        tx.executeSql(query, params);
 	                    });
 	                }, function (error) {
