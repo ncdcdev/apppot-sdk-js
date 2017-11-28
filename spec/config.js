@@ -13,30 +13,34 @@ window.account = {
 };
 
 window.TaskModel = AppPot.defineModel('Task', {
-  'title': {
-    type: AppPot.DataType.Varchar,
-    length: 100,
-  },
-  'description': {
-    type: AppPot.DataType.Varchar,
-    length: 255
-  },
-  'limit': {
-    type: AppPot.DataType.Long
-  },
-  'num': {
-    type: AppPot.DataType.Integer
-  },
-  'placeId': {
-    type: AppPot.DataType.Varchar
-  },
-  'done': {
-    type: AppPot.DataType.Bool
-  },
-  'registeredDate': {
-    type: AppPot.DataType.DateTime
+    'title': {
+      type: AppPot.DataType.Varchar,
+      length: 100,
+    },
+    'description': {
+      type: AppPot.DataType.Varchar,
+      length: 255
+    },
+    'limit': {
+      type: AppPot.DataType.Long
+    },
+    'num': {
+      type: AppPot.DataType.Integer
+    },
+    'placeId': {
+      type: AppPot.DataType.Varchar
+    },
+    'done': {
+      type: AppPot.DataType.Bool
+    },
+    'registeredDate': {
+      type: AppPot.DataType.DateTime
+    },
+    'testMethod': function(arg1) {
+      return this.limit + '-' + this.num + '-' + arg1;
+    }
   }
-});
+);
 
 window.PlaceModel = AppPot.defineModel('Place', {
   'zipcode': {

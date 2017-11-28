@@ -147,10 +147,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._localDb;
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1511847659) || "unknown";
+	        return (1511850668) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","30"]).join('.') || "unknown";
+	        return (["2","3","31"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -3721,6 +3721,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                errors.push("invalid column name: " + tableName + "." + name_1);
 	                continue;
 	            }
+	            if (typeof cols[name_1] == 'function') {
+	                continue;
+	            }
 	            table.columns.push(Database._buildColumnItem(name_1, cols[name_1]));
 	        }
 	        return { table: table, errors: errors };
@@ -3894,16 +3897,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var _this = this;
 	                this._columns = {};
 	                Object.keys(modelColumns).forEach(function (key) {
-	                    Object.defineProperty(_this, key, {
-	                        get: function () {
-	                            return this.get(key);
-	                        },
-	                        set: function (value) {
-	                            this.set(key, value);
-	                        },
-	                        enumerable: true,
-	                        configurable: true
-	                    });
+	                    if (typeof modelColumns[key] == 'function') {
+	                        Object.defineProperty(_this, key, {
+	                            enumerable: true,
+	                            configurable: true,
+	                            value: modelColumns[key].bind(_this)
+	                        });
+	                    }
+	                    else {
+	                        Object.defineProperty(_this, key, {
+	                            get: function () {
+	                                return this.get(key);
+	                            },
+	                            set: function (value) {
+	                                this.set(key, value);
+	                            },
+	                            enumerable: true,
+	                            configurable: true
+	                        });
+	                    }
 	                });
 	                if (columns) {
 	                    this.set(columns);

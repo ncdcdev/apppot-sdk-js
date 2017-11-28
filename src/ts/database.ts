@@ -138,6 +138,9 @@ export class Database {
         errors.push(`invalid column name: ${tableName}.${name}`);
         continue;
       }
+      if(typeof cols[name] == 'function'){
+        continue;
+      }
       table.columns.push(Database._buildColumnItem(name, cols[name]));
     }
     return {table, errors}

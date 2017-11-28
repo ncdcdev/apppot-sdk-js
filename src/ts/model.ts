@@ -80,7 +80,7 @@ export namespace Model {
 
   let classList = {};
 
-  function createModelInstance(className, columns?:any[], classObj?){
+  function createModelInstance(className, columns?:any, classObj?){
     const _class = classObj ? classObj : classList[className];
     if(columns){
       return new _class(columns);
@@ -99,7 +99,7 @@ export namespace Model {
     "remove"
   ];
 
-  export function define(appPot:AppPot, _className: string, modelColumns:any[]){
+  export function define(appPot:AppPot, _className: string, modelColumns:any){
 
     Object.keys(modelColumns).forEach((key) => {
       if(modelMethods.indexOf(key) != -1){
@@ -115,16 +115,24 @@ export namespace Model {
 
       constructor(columns?){
         Object.keys(modelColumns).forEach((key) => {
-          Object.defineProperty(this, key, {
-            get: function () {
-              return this.get(key);
-            },
-            set: function (value) {
-              this.set(key, value);
-            },
-            enumerable: true,
-            configurable: true
-          });
+          if( typeof modelColumns[key] == 'function' ){
+            Object.defineProperty(this, key, {
+              enumerable: true,
+              configurable: true,
+              value: modelColumns[key].bind(this)
+            });
+          }else{
+            Object.defineProperty(this, key, {
+              get: function () {
+                return this.get(key);
+              },
+              set: function (value) {
+                this.set(key, value);
+              },
+              enumerable: true,
+              configurable: true
+            });
+          }
         });
         if(columns){
           this.set(columns);
@@ -916,7 +924,7 @@ export namespace Model {
     setWhereExpression(exp:Expression){
       if(!this._queryObj['where']){
         this._queryObj['where'] = {};
-      this._queryObj['where']['expression'] = exp.getQuery();
+        this._queryObj['where']['expression'] = exp.getQuery();
       }else if(this._concat){
         const nextExp = new Expression(this._queryObj['where']['expression']);
         this._queryObj['where']['expression'] = nextExp.concatBy(this._concat, exp);

@@ -77,6 +77,8 @@ describe('Modelのテスト', function(){
       expect(model.description).toBe(self.testTarget.get('description'));
       expect(model.registeredDate instanceof Date).toBeTruthy();
       done();
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
     });
   });
 
@@ -87,6 +89,8 @@ describe('Modelのテスト', function(){
       expect(models['Task'] instanceof Array).toBeTruthy();
       expect(models['Task'].length).toBe(self.numOfTask);
       done();
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
     });
   });
 
@@ -96,6 +100,8 @@ describe('Modelのテスト', function(){
       expect(models instanceof Object).toBeTruthy();
       expect(models.count).toBe(20);
       done();
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
     })
   })
 
@@ -122,6 +128,8 @@ describe('Modelのテスト', function(){
       expect(model.title).toBe('save title');
       expect(model.description).toBe('save description');
       done();
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
     });
   });
 
@@ -153,7 +161,20 @@ describe('Modelのテスト', function(){
       expect(task.isNew()).not.toBeTruthy();
       expect(task.title).toBe('updated title');
       done();
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
     });
   });
 
+  it('defineModelで定義したメソッドが使用できる', function(done){
+    var self = this;
+    TaskModel.findById(self.testTarget.objectId)
+    .then(function(model){
+      var testArg = 123;
+      expect(model.testMethod(testArg)).toBe(model.limit + '-' + model.num + '-' + testArg);
+      done();
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
+    });
+  });
 });
