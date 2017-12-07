@@ -99,6 +99,15 @@ export namespace Model {
     "remove"
   ];
 
+  const defaultColumns = [
+    'objectId',
+    'scopeType',
+    'serverCreateTime',
+    'serverUpdateTime',
+    'createTime',
+    'updateTime'
+  ];
+
   export function define(appPot:AppPot, _className: string, modelColumns:any){
 
     Object.keys(modelColumns).forEach((key) => {
@@ -106,6 +115,8 @@ export namespace Model {
         throw new Error(-1, 'Invalid column name: ' + key);
       }
     });
+
+    let defaultScope = +ScopeType.Group;
 
     classList[_className] = class ModelClass {
 
@@ -121,6 +132,8 @@ export namespace Model {
               configurable: true,
               value: modelColumns[key].bind(this)
             });
+          }else if( key == 'scopeType' ){
+            defaultScope = +modelColumns[key].type;
           }else{
             Object.defineProperty(this, key, {
               get: function () {
@@ -132,6 +145,36 @@ export namespace Model {
               enumerable: true,
               configurable: true
             });
+          }
+        });
+        defaultColumns.forEach((key) => {
+          if(!this.hasOwnProperty(key)){
+            switch(key){
+              case 'scopeType':
+                Object.defineProperty(this, key, {
+                  get: function () {
+                    return +this.get(key);
+                  },
+                  set: function (value) {
+                    this.set(key, +value);
+                  },
+                  enumerable: true,
+                  configurable: true
+                });
+                break;
+              default:
+                Object.defineProperty(this, key, {
+                  get: function () {
+                    return this.get(key);
+                  },
+                  set: function (value) {
+                    this.set(key, value);
+                  },
+                  enumerable: true,
+                  configurable: true
+                });
+                break;
+            }
           }
         });
         if(columns){
@@ -714,16 +757,18 @@ export namespace Model {
           }
         });
         Object.keys(this._columns).forEach((key) => {
-          Object.defineProperty(this, key, {
-            get: function () {
-              return this.get(key);
-            },
-            set: function (value) {
-              this.set(key, value);
-            },
-            enumerable: true,
-            configurable: true
-          });
+          if(!this.hasOwnProperty(key)) {
+            Object.defineProperty(this, key, {
+              get: function () {
+                return this.get(key);
+              },
+              set: function (value) {
+                this.set(key, value);
+              },
+              enumerable: true,
+              configurable: true
+            });
+          }
         });
         return this;
       }
@@ -743,6 +788,9 @@ export namespace Model {
         let _columns = {};
         objectAssign(_columns, columns);
         Object.keys(modelColumns).forEach((key) => {
+          if(key == 'scopeType'){
+            return;
+          }
           if(columns[key] === null || columns[key] === undefined){
             return;
           }
@@ -782,6 +830,9 @@ export namespace Model {
         let _columns = {};
         objectAssign(_columns, columns);
         Object.keys(modelColumns).forEach((key) => {
+          if(key == 'scopeType'){
+            return;
+          }
           if(columns[key] === null || columns[key] === undefined){
             return;
           }
@@ -813,7 +864,7 @@ export namespace Model {
           filteredColumns[col] = columns[col];
         });
         filteredColumns['objectId'] = columns['objectId'];
-        filteredColumns['scopeType'] = columns['scopeType'] || 2;
+        filteredColumns['scopeType'] = +(columns['scopeType'] || defaultScope);
         filteredColumns['serverCreateTime'] = columns['serverCreateTime'];
         filteredColumns['serverUpdateTime'] = columns['serverUpdateTime'];
         filteredColumns['createTime'] = columns['createTime'];

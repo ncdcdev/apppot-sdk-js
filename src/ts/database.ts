@@ -141,6 +141,9 @@ export class Database {
       if(typeof cols[name] == 'function'){
         continue;
       }
+      if( name == 'scopeType' ) {
+        continue;
+      }
       table.columns.push(Database._buildColumnItem(name, cols[name]));
     }
     return {table, errors}

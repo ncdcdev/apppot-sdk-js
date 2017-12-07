@@ -76,6 +76,7 @@ describe('Modelのテスト', function(){
       expect(model.title).toBe(self.testTarget.get('title'));
       expect(model.description).toBe(self.testTarget.get('description'));
       expect(model.registeredDate instanceof Date).toBeTruthy();
+      expect(model.scopeType).toBe(AppPot.Model.ScopeType.All);
       done();
     }).catch(function(err){
       done.fail(JSON.stringify(err));

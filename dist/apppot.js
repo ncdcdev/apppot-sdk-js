@@ -147,10 +147,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._localDb;
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1511850668) || "unknown";
+	        return (1512637479) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","31"]).join('.') || "unknown";
+	        return (["2","3","32"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -3724,6 +3724,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (typeof cols[name_1] == 'function') {
 	                continue;
 	            }
+	            if (name_1 == 'scopeType') {
+	                continue;
+	            }
 	            table.columns.push(Database._buildColumnItem(name_1, cols[name_1]));
 	        }
 	        return { table: table, errors: errors };
@@ -3886,12 +3889,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        "save",
 	        "remove"
 	    ];
+	    var defaultColumns = [
+	        'objectId',
+	        'scopeType',
+	        'serverCreateTime',
+	        'serverUpdateTime',
+	        'createTime',
+	        'updateTime'
+	    ];
 	    function define(appPot, _className, modelColumns) {
 	        Object.keys(modelColumns).forEach(function (key) {
 	            if (modelMethods.indexOf(key) != -1) {
 	                throw new error_1.Error(-1, 'Invalid column name: ' + key);
 	            }
 	        });
+	        var defaultScope = +ScopeType.Group;
 	        classList[_className] = (function () {
 	            function ModelClass(columns) {
 	                var _this = this;
@@ -3904,6 +3916,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            value: modelColumns[key].bind(_this)
 	                        });
 	                    }
+	                    else if (key == 'scopeType') {
+	                        defaultScope = +modelColumns[key].type;
+	                    }
 	                    else {
 	                        Object.defineProperty(_this, key, {
 	                            get: function () {
@@ -3915,6 +3930,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            enumerable: true,
 	                            configurable: true
 	                        });
+	                    }
+	                });
+	                defaultColumns.forEach(function (key) {
+	                    if (!_this.hasOwnProperty(key)) {
+	                        switch (key) {
+	                            case 'scopeType':
+	                                Object.defineProperty(_this, key, {
+	                                    get: function () {
+	                                        return +this.get(key);
+	                                    },
+	                                    set: function (value) {
+	                                        this.set(key, +value);
+	                                    },
+	                                    enumerable: true,
+	                                    configurable: true
+	                                });
+	                                break;
+	                            default:
+	                                Object.defineProperty(_this, key, {
+	                                    get: function () {
+	                                        return this.get(key);
+	                                    },
+	                                    set: function (value) {
+	                                        this.set(key, value);
+	                                    },
+	                                    enumerable: true,
+	                                    configurable: true
+	                                });
+	                                break;
+	                        }
 	                    }
 	                });
 	                if (columns) {
@@ -4522,16 +4567,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                });
 	                Object.keys(this._columns).forEach(function (key) {
-	                    Object.defineProperty(_this, key, {
-	                        get: function () {
-	                            return this.get(key);
-	                        },
-	                        set: function (value) {
-	                            this.set(key, value);
-	                        },
-	                        enumerable: true,
-	                        configurable: true
-	                    });
+	                    if (!_this.hasOwnProperty(key)) {
+	                        Object.defineProperty(_this, key, {
+	                            get: function () {
+	                                return this.get(key);
+	                            },
+	                            set: function (value) {
+	                                this.set(key, value);
+	                            },
+	                            enumerable: true,
+	                            configurable: true
+	                        });
+	                    }
 	                });
 	                return this;
 	            };
@@ -4545,6 +4592,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var _columns = {};
 	                objectAssign(_columns, columns);
 	                Object.keys(modelColumns).forEach(function (key) {
+	                    if (key == 'scopeType') {
+	                        return;
+	                    }
 	                    if (columns[key] === null || columns[key] === undefined) {
 	                        return;
 	                    }
@@ -4590,6 +4640,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var _columns = {};
 	                objectAssign(_columns, columns);
 	                Object.keys(modelColumns).forEach(function (key) {
+	                    if (key == 'scopeType') {
+	                        return;
+	                    }
 	                    if (columns[key] === null || columns[key] === undefined) {
 	                        return;
 	                    }
@@ -4623,7 +4676,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    filteredColumns[col] = columns[col];
 	                });
 	                filteredColumns['objectId'] = columns['objectId'];
-	                filteredColumns['scopeType'] = columns['scopeType'] || 2;
+	                filteredColumns['scopeType'] = +(columns['scopeType'] || defaultScope);
 	                filteredColumns['serverCreateTime'] = columns['serverCreateTime'];
 	                filteredColumns['serverUpdateTime'] = columns['serverUpdateTime'];
 	                filteredColumns['createTime'] = columns['createTime'];

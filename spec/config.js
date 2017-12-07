@@ -36,6 +36,9 @@ window.TaskModel = AppPot.defineModel('Task', {
     'registeredDate': {
       type: AppPot.DataType.DateTime
     },
+    'scopeType': {
+      type: AppPot.Model.ScopeType.All
+    },
     'testMethod': function(arg1) {
       return this.limit + '-' + this.num + '-' + arg1;
     }
