@@ -1,29 +1,41 @@
 import {AppPot} from './apppot';
 import {Promise} from 'es6-promise';
+const objectAssign = require('object-assign');
 
 interface GatewayOptions {
   original?: boolean;
+  headers: Object;
 }
 
 
 function request(func: Function, serviceName: String, url: String, params?: Object, body?: Object, options?: GatewayOptions){
   let _response = 'json';
   let _orig = false;
+  let _headers = {};
 
-  if( options && options.original ){
-    _response = 'original';
-    _orig = true;
+  if( options ){
+    if( options.original ){
+      _response = 'original';
+      _orig = true;
+    }
+    if( options.headers ){
+      _headers = objectAssign(
+        _headers,
+        options.headers
+      );
+    }
   }
 
   let _params = params ? params : {};
-  let _body = body ? body : [];
-  if( !(_body instanceof Array) ){
+  let _body = body ? body : undefined;
+  if( !(_body instanceof Array) &&
+      _body !== undefined ){
     _body = [_body];
   }
 
   let _url = url.replace(/^\//, '').replace(/\/$/, '');
   return new Promise( ( resolve, reject ) => {
-    func(`gateway/${serviceName}/${_response}/${_url}`).query(_params).send(_body).end((err, res) => {
+    func(`gateway/${serviceName}/${_response}/${_url}`).set(_headers).query(_params).send(_body).end((err, res) => {
       if(_orig){
         return resolve({error: err, response: res});
       }
@@ -47,7 +59,7 @@ class Gateway {
   }
 
   get(serviceName: String, url: String, params: Object, body: Object, options: GatewayOptions) {
-    return request(this._ajax.get.bind(this._ajax), serviceName, url, params, body, options);
+    return request(this._ajax.get.bind(this._ajax), serviceName, url, params, undefined, options);
   }
 
   post(serviceName: String, url: String, params: Object, body: Object, options: GatewayOptions) {
@@ -59,7 +71,7 @@ class Gateway {
   }
   
   remove (serviceName: String, url: String, params: Object, body: Object, options: GatewayOptions) {
-    return request(this._ajax.remove.bind(this._ajax), serviceName, url, params, body, options);
+    return request(this._ajax.remove.bind(this._ajax), serviceName, url, params, undefined, options);
   }
 }
 

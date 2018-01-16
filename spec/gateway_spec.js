@@ -48,9 +48,16 @@ describe('GatewayAPI', function(){
 
   it('get jsonでデータが受け取れる(option指定)', function(done){
     var self = this;
+    var option = {
+      original: false,
+      headers: {
+        'x-test-header1': 'test-header-value1A',
+        'x-test-header2': 'test-header-value2B',
+      }
+    };
     AppPot.Gateway.get(serviceName, tableName, {
         "BUILDINGID":"NCDC00001",
-    }, null, { original: false })
+    }, null, option)
     .then(function(json){
       expect(json instanceof Object).toBeTruthy();
       done();

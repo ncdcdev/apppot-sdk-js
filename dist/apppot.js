@@ -147,10 +147,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._localDb;
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1512637479) || "unknown";
+	        return (1516077857) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","32"]).join('.') || "unknown";
+	        return (["2","3","33"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -5760,21 +5760,29 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	var es6_promise_1 = __webpack_require__(13);
+	var objectAssign = __webpack_require__(3);
 	function request(func, serviceName, url, params, body, options) {
 	    var _response = 'json';
 	    var _orig = false;
-	    if (options && options.original) {
-	        _response = 'original';
-	        _orig = true;
+	    var _headers = {};
+	    if (options) {
+	        if (options.original) {
+	            _response = 'original';
+	            _orig = true;
+	        }
+	        if (options.headers) {
+	            _headers = objectAssign(_headers, options.headers);
+	        }
 	    }
 	    var _params = params ? params : {};
-	    var _body = body ? body : [];
-	    if (!(_body instanceof Array)) {
+	    var _body = body ? body : undefined;
+	    if (!(_body instanceof Array) &&
+	        _body !== undefined) {
 	        _body = [_body];
 	    }
 	    var _url = url.replace(/^\//, '').replace(/\/$/, '');
 	    return new es6_promise_1.Promise(function (resolve, reject) {
-	        func("gateway/" + serviceName + "/" + _response + "/" + _url).query(_params).send(_body).end(function (err, res) {
+	        func("gateway/" + serviceName + "/" + _response + "/" + _url).set(_headers).query(_params).send(_body).end(function (err, res) {
 	            if (_orig) {
 	                return resolve({ error: err, response: res });
 	            }
@@ -5797,7 +5805,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        ;
 	    }
 	    Gateway.prototype.get = function (serviceName, url, params, body, options) {
-	        return request(this._ajax.get.bind(this._ajax), serviceName, url, params, body, options);
+	        return request(this._ajax.get.bind(this._ajax), serviceName, url, params, undefined, options);
 	    };
 	    Gateway.prototype.post = function (serviceName, url, params, body, options) {
 	        return request(this._ajax.post.bind(this._ajax), serviceName, url, params, body, options);
@@ -5806,7 +5814,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return request(this._ajax.put.bind(this._ajax), serviceName, url, params, body, options);
 	    };
 	    Gateway.prototype.remove = function (serviceName, url, params, body, options) {
-	        return request(this._ajax.remove.bind(this._ajax), serviceName, url, params, body, options);
+	        return request(this._ajax.remove.bind(this._ajax), serviceName, url, params, undefined, options);
 	    };
 	    return Gateway;
 	}());
