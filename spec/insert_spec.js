@@ -15,6 +15,7 @@ describe('insertのテスト', function(){
     var columns = {
       title: 'insert_spec',
       description: 'test-description',
+      value: '12345678901234567890.123456789012345678',
       done: false,
       registeredDate: new Date()
     };
@@ -23,9 +24,11 @@ describe('insertのテスト', function(){
       expect(model instanceof TaskModel).toBeTruthy();
       expect(model.get('objectId')).toMatch(/Task_[0-9a-f]+/);
       expect(model.get('title')).toEqual(columns.title);
+      expect(model.get('value')).toEqual(columns.value);
       expect(model.get('description')).toEqual(columns.description);
       expect(typeof model.get('serverUpdateTime')).toEqual('string');
       expect(typeof model.get('done')).toEqual('boolean');
+      expect(typeof model.get('value')).toEqual('string');
       expect(model.get('registeredDate') instanceof Date).toBeTruthy();
       return model.objectId;
     })
@@ -37,13 +40,14 @@ describe('insertのテスト', function(){
       expect(model.objectId).toMatch(/Task_[0-9a-f]+/);
       expect(model.title).toEqual(columns.title);
       expect(model.description).toEqual(columns.description);
+      expect(model.value).toEqual(columns.value);
       expect(typeof model.serverUpdateTime).toEqual('string');
       expect(typeof model.done).toEqual('boolean');
+      expect(typeof model.get('value')).toEqual('string');
       expect(model.registeredDate instanceof Date).toBeTruthy();
       done()
-    })
-    .catch(function(err){
-      throw err;
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
     });
   });
 
@@ -91,9 +95,8 @@ describe('insertのテスト', function(){
       // expect(_models[1].description).toEqual(models[1].description);
       expect(typeof _models[1].serverUpdateTime).toEqual('string');
       done()
-    })
-    .catch(function(err){
-      throw err;
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
     });
   });
 
@@ -141,9 +144,8 @@ describe('insertのテスト', function(){
       // expect(_models[1].description).toEqual(columns[1].description);
       expect(typeof _models[1].serverUpdateTime).toEqual('string');
       done()
-    })
-    .catch(function(err){
-      throw err;
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
     });
   });
 

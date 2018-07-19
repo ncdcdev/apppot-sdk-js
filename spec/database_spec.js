@@ -74,6 +74,8 @@ describe('createDatabaseのテスト', function(){
       expect(models['Task'] instanceof Array).toBeTruthy();
       expect(models['Task'].length).toBe(0);
       done();
+    }).catch(function(err){
+      done.fail(JSON.stringify(err));
     });
   });
 });

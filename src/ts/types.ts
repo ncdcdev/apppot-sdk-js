@@ -4,5 +4,8 @@ export enum DataType {
   Long,
   Bool,
   DateTime,
-  Double
+  Double,
+  Text,
+  Float,
+  Decimal
 }

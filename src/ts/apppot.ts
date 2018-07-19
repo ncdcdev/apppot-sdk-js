@@ -15,6 +15,7 @@ import {getGateway} from './gateway';
 import {DataType} from './types';
 import {Error} from './error';
 import {Promise} from 'es6-promise';
+const objectAssign = require('object-assign');
 
 export class AppPot {
   private _config: Config;
@@ -134,7 +135,7 @@ export class AppPot {
       .end(Ajax.end(resolve, reject));
     });
   }
-  sendPushNotification(message, target, title?){
+  sendPushNotification(message, target, title?, additionalOptions?){
     if(!this._authInfo.hasToken()){
       return Promise.reject('not logined');
     }
@@ -148,6 +149,29 @@ export class AppPot {
 
     if(title){
       payload['title'] = title;
+    }
+
+    const additionalOptionsKeys = [
+      "targetApp",
+      "sendAt",
+      "icon",
+      "badge",
+      "sound",
+      "titleLocKey",
+      "titleLocArgs",
+      "messageLocKey",
+      "messageLocArgs",
+      "customData"
+    ];
+    if(additionalOptions && typeof additionalOptions === 'object' && !Array.isArray(additionalOptions)){
+      const _additionalOptions = {};
+      additionalOptionsKeys.forEach((key) => {
+        if(additionalOptions[key] !== null &&
+           additionalOptions[key] !== undefined) {
+          _additionalOptions[key] = additionalOptions[key];
+        }
+      });
+      objectAssign(payload, _additionalOptions);
     }
 
     return new Promise((resolve, reject)=>{

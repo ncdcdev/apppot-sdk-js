@@ -1,15 +1,21 @@
 window.AppPot = AppPotSDK.getService({
-  url: 'http://trial-ec2a-01.apppot.net/apppot/',
+  url: 'http://trial-ec2a-01.apppot.net/apppot20161007/',
   appId: 'jp.co.ncdc.sdk',
-  appKey: '10fcdcde414145f18d890518d0333607',
+  appKey: '93df59e1b5334dedae76ba1942548528',
   appVersion: '1.0.0',
-  companyId: 4,
+  companyId: 7,
 });
 
 window.account = {
-  userId: 205,
-  username: 'user001',
+  userId: 49,
+  username: 'jssdk0001',
   password: 'aaaa'
+};
+
+window.testGroup = {
+  id: 47,
+  name: 'jssdk',
+  description: 'oyp00vbye9jsnnzr'
 };
 
 window.TaskModel = AppPot.defineModel('Task', {
@@ -18,7 +24,7 @@ window.TaskModel = AppPot.defineModel('Task', {
       length: 100,
     },
     'description': {
-      type: AppPot.DataType.Varchar,
+      type: AppPot.DataType.Text,
       length: 255
     },
     'limit': {
@@ -26,6 +32,9 @@ window.TaskModel = AppPot.defineModel('Task', {
     },
     'num': {
       type: AppPot.DataType.Integer
+    },
+    'value': {
+      type: AppPot.DataType.Decimal
     },
     'placeId': {
       type: AppPot.DataType.Varchar

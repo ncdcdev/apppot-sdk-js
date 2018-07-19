@@ -70,6 +70,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var types_1 = __webpack_require__(17);
 	var error_1 = __webpack_require__(11);
 	var es6_promise_1 = __webpack_require__(13);
+	var objectAssign = __webpack_require__(3);
 	var AppPot = (function () {
 	    function AppPot(props) {
 	        this._lock = [];
@@ -147,10 +148,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._localDb;
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1516077857) || "unknown";
+	        return (1531098599) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["2","3","33"]).join('.') || "unknown";
+	        return (["3","0","0"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
@@ -168,7 +169,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                .end(ajax_1.Ajax.end(resolve, reject));
 	        });
 	    };
-	    AppPot.prototype.sendPushNotification = function (message, target, title) {
+	    AppPot.prototype.sendPushNotification = function (message, target, title, additionalOptions) {
 	        var _this = this;
 	        if (!this._authInfo.hasToken()) {
 	            return es6_promise_1.Promise.reject('not logined');
@@ -181,6 +182,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	        if (title) {
 	            payload['title'] = title;
+	        }
+	        var additionalOptionsKeys = [
+	            "targetApp",
+	            "sendAt",
+	            "icon",
+	            "badge",
+	            "sound",
+	            "titleLocKey",
+	            "titleLocArgs",
+	            "messageLocKey",
+	            "messageLocArgs",
+	            "customData"
+	        ];
+	        if (additionalOptions && typeof additionalOptions === 'object' && !Array.isArray(additionalOptions)) {
+	            var _additionalOptions_1 = {};
+	            additionalOptionsKeys.forEach(function (key) {
+	                if (additionalOptions[key] !== null &&
+	                    additionalOptions[key] !== undefined) {
+	                    _additionalOptions_1[key] = additionalOptions[key];
+	                }
+	            });
+	            objectAssign(payload, _additionalOptions_1);
 	        }
 	        return new es6_promise_1.Promise(function (resolve, reject) {
 	            _this._ajax
@@ -3657,6 +3680,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Database.mapType2SqliteType = function (type) {
 	        switch (type) {
 	            case 'varchar':
+	            case 'text':
+	            case 'decimal':
+	            case 'double':
+	            case 'float':
 	                return 'TEXT';
 	            case 'integer':
 	            case 'long':
@@ -3670,6 +3697,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	        switch (column.type) {
 	            case 'varchar':
+	                column['type'] = 'varchar';
 	                column['fieldLength'] = col.length;
 	                break;
 	            case 'bool':
@@ -3677,11 +3705,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	                column['fieldLength'] = 1;
 	                break;
 	            case 'datetime':
-	                column['type'] = 'long';
+	                column['type'] = 'datetime';
 	                break;
 	            case 'double':
-	                column['type'] = 'varchar';
-	                column['fieldLength'] = 255;
+	                column['type'] = 'double';
+	                break;
+	            case 'text':
+	                column['type'] = 'text';
+	                break;
+	            case 'float':
+	                column['type'] = 'float';
+	                break;
+	            case 'decimal':
+	                column['type'] = 'decimal';
 	                break;
 	        }
 	        return column;
@@ -3777,6 +3813,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    DataType[DataType["Bool"] = 3] = "Bool";
 	    DataType[DataType["DateTime"] = 4] = "DateTime";
 	    DataType[DataType["Double"] = 5] = "Double";
+	    DataType[DataType["Text"] = 6] = "Text";
+	    DataType[DataType["Float"] = 7] = "Float";
+	    DataType[DataType["Decimal"] = 8] = "Decimal";
 	})(exports.DataType || (exports.DataType = {}));
 	var DataType = exports.DataType;
 
@@ -4625,7 +4664,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            _columns[key] = new Date(parseInt(columns[key]));
 	                        }
 	                    }
-	                    else if (modelColumns[key]['type'] == types_1.DataType.Double) {
+	                    else if (modelColumns[key]['type'] == types_1.DataType.Double ||
+	                        modelColumns[key]['type'] == types_1.DataType.Float) {
 	                        if (columns[key] === "") {
 	                            _columns[key] = null;
 	                        }
@@ -4644,6 +4684,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        return;
 	                    }
 	                    if (columns[key] === null || columns[key] === undefined) {
+	                        if (modelColumns[key]['type'] == types_1.DataType.DateTime) {
+	                            _columns[key] = 0;
+	                        }
+	                        if (modelColumns[key]['type'] == types_1.DataType.Bool) {
+	                            _columns[key] = 0;
+	                        }
 	                        return;
 	                    }
 	                    if (modelColumns[key]['type'] == types_1.DataType.Bool) {
@@ -4655,19 +4701,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        }
 	                        _columns[key] = columns[key].getTime();
 	                    }
-	                    else if (modelColumns[key]['type'] == types_1.DataType.Double) {
+	                    else if (modelColumns[key]['type'] == types_1.DataType.Double ||
+	                        modelColumns[key]['type'] == types_1.DataType.Float) {
 	                        if (typeof columns[key] == 'number') {
-	                            _columns[key] = columns[key] + "";
+	                            _columns[key] = columns[key];
 	                        }
 	                        else {
-	                            _columns[key] = parseFloat(columns[key]) + "";
+	                            _columns[key] = parseFloat(columns[key]);
+	                        }
+	                    }
+	                    else if (modelColumns[key]['type'] == types_1.DataType.Decimal) {
+	                        _columns[key] = columns[key] + "";
+	                        if ((columns[key] + "").match(/^[1-9][0-9]{0,19}(.[0-9]{1,18})/) === null) {
+	                            throw new error_1.Error(-1, 'invalid type: column ' + _className + '"."' + key + '"');
 	                        }
 	                    }
 	                });
 	                if (isCreate) {
-	                    _columns['createTime'] = Date.now() / 1000;
+	                    _columns['createTime'] = Math.floor(Date.now() / 1000) + "";
 	                }
-	                _columns['updateTime'] = Date.now() / 1000;
+	                _columns['updateTime'] = Math.floor(Date.now() / 1000) + "";
 	                return classList[_className].filterDefinedColumnOnly(_columns);
 	            };
 	            ModelClass.filterDefinedColumnOnly = function (columns) {
@@ -4881,10 +4934,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            this._queryObj['range'] = {
 	                limit: args[0] || 1000,
-	                offset: 1
+	                offset: 0
 	            };
 	            if (args.length == 2) {
-	                this._queryObj['range']['offset'] = args[1] + 1;
+	                this._queryObj['range']['offset'] = args[1];
 	            }
 	            return this;
 	        };
@@ -4896,7 +4949,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var _this = this;
 	            this._queryObj['range'] = this._queryObj['range'] || {
 	                limit: 1,
-	                offset: 1
+	                offset: 0
 	            };
 	            if (this._useLocal) {
 	                return this._queryToLocal()
@@ -4942,7 +4995,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    if (className == _this._class.className) {
 	                        classObj = _this._class;
 	                    }
-	                    var models = obj[key] ? obj[key] : obj[className];
+	                    var models = (obj[key] ? obj[key] : obj[className]) || [];
 	                    models.forEach(function (valval, idx) {
 	                        ret[key].push(createModelInstance(className, valval, classObj));
 	                    });

@@ -72,6 +72,10 @@ export class Database {
   static mapType2SqliteType(type){
     switch(type){
       case 'varchar':
+      case 'text':
+      case 'decimal':
+      case 'double':
+      case 'float':
         return 'TEXT';
       case 'integer':
       case 'long':
@@ -86,6 +90,7 @@ export class Database {
     };
     switch(column.type){
       case 'varchar':
+        column['type'] = 'varchar';
         column['fieldLength'] = col.length;
         break;
       case 'bool':
@@ -93,11 +98,19 @@ export class Database {
         column['fieldLength'] = 1;
         break;
       case 'datetime':
-        column['type'] = 'long';
+        column['type'] = 'datetime';
         break;
       case 'double':
-        column['type'] = 'varchar';
-        column['fieldLength'] = 255;
+        column['type'] = 'double';
+        break;
+      case 'text':
+        column['type'] = 'text';
+        break;
+      case 'float':
+        column['type'] = 'float';
+        break;
+      case 'decimal':
+        column['type'] = 'decimal';
         break;
     }
     return column;

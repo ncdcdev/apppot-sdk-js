@@ -65,8 +65,8 @@ describe('複数取得のテスト', function(){
             title: 'select_spec' + index,
             description: 'test-descriptions' + index,
             limit: self.numOfTask-i,
-            //placeId: self.placeIds[i%self.numOfPlace]
-            placeId: null
+            placeId: self.placeIds[i%self.numOfPlace]
+            //placeId: null
           })
         )
       }
@@ -86,6 +86,20 @@ describe('複数取得のテスト', function(){
       expect(models['Task'].length).toBe(self.numOfTask);
       done();
     });
+  });
+
+  it('ありえない条件で0件のレコードを取得できる', function(done){
+    var self = this;
+    TaskModel.select()
+      .where('#Task.limit >= ?', 1000)
+      .findList().then(function(models){
+        expect(models instanceof Object).toBeTruthy();
+        expect(models['Task'] instanceof Array).toBeTruthy();
+        expect(models['Task'].length).toBe(0);
+        done();
+      }).catch(function(err){
+        done.fail(JSON.stringify(err));
+      });
   });
 
   it('orderを指定したfindOneで順序どおりの最初の一件が取得できる', function(done){
@@ -208,9 +222,9 @@ describe('複数取得のテスト', function(){
       .then(function(models){
         expect(models instanceof Object).toBeTruthy();
         expect(models['Task'] instanceof Array).toBeTruthy();
-        expect(models['Task'].length).toBe(count);
+        expect(models['Task'].length).toBe(limitCondition);
         expect(models['Place'] instanceof Array).toBeTruthy();
-        expect(models['Place'].length).toBe(count);
+        expect(models['Place'].length).toBe(limitCondition);
         for(var i = 0; i < count; i++){
           expect(models['Task'][i].get('placeId')).toBe(models['Place'][i].get('objectId'));
         }
@@ -276,9 +290,9 @@ describe('複数取得のテスト', function(){
       .then(function(models){
         expect(models instanceof Object).toBeTruthy();
         expect(models['Task'] instanceof Array).toBeTruthy();
-        expect(models['Task'].length).toBe(count);
+        expect(models['Task'].length).toBe(limitCondition);
         expect(models['Place'] instanceof Array).toBeTruthy();
-        expect(models['Place'].length).toBe(count);
+        expect(models['Place'].length).toBe(limitCondition);
         for(var i = 0; i < count; i++){
           expect(models['Task'][i].get('placeId')).toBe(models['Place'][i].get('objectId'));
         }
@@ -347,6 +361,15 @@ describe('複数取得のテスト', function(){
     .orderBy('#Task.limit', AppPot.Model.Order.asc)
     .findList()
     .then(function(models){
+      //console.log(models['Task'][0]);
+      //console.log(models['Task'][1]);
+      //console.log(models['Task'][2]);
+      //console.log(models['Task'][3]);
+      //console.log(models['Task'][4]);
+      //console.log(models['Task'][5]);
+      //console.log(models['Task'][6]);
+      //console.log(models['Task'][7]);
+      //console.log(models['Task'][8]);
       expect(models instanceof Object).toBeTruthy();
       expect(models['Task'] instanceof Array).toBeTruthy();
       expect(models['Task'].length).toBe(limit);

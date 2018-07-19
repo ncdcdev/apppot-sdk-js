@@ -87,7 +87,7 @@ describe('User管理APIのテスト', function(){
         expect(users[0].groupsRoles instanceof Array).toBeTruthy();
         expect(users[0].groupsRoles[0] instanceof AppPot.GroupsRoles).toBeTruthy();
         expect(users[0].groupsRoles[0].groupId).toEqual(groupId);
-        expect(users[0].groupsRoles[0].groupName).toEqual('group001');
+        expect(users[0].groupsRoles[0].groupName).toEqual(testGroup.name);
         done();
       });
   });
@@ -135,7 +135,7 @@ describe('User管理APIのテスト', function(){
       .then(function(users){
         expect(users instanceof Array).toBeTruthy();
         var delUsers = users.filter(function(user){
-          return user.account != 'user001';
+          return user.account != account.username;
         });
         return Promise.all(
           delUsers.map(function(user){

@@ -12,6 +12,7 @@ describe('単件取得のテスト', function(){
         title: 'find_spec',
         description: 'test-description',
         num: 2,
+        value: '12345678901234567890.123456789012345678',
         done: false,
         registeredDate: new Date()
       };
@@ -35,6 +36,8 @@ describe('単件取得のテスト', function(){
       expect(model.get('description')).toBe(self.columns['description']);
       expect(typeof model.num).toBe('number');
       expect(model.get('num')).toBe(self.columns['num']);
+      expect(typeof model.value).toBe('string');
+      expect(model.get('value')).toBe(self.columns['value']);
       expect(typeof model.done).toBe('boolean');
       expect(model.get('done')).toBe(self.columns['done']);
       expect(model.registeredDate instanceof Date).toBeTruthy();

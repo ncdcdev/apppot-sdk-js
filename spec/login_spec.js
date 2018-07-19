@@ -21,9 +21,9 @@ describe('loginのテスト', function(){
     AppPot.LocalAuthenticator.login(account.username, account.password)
     .then(function(){
       var user = AppPot.getUser();
-      expect(user.groupsRoles[0].groupId).toEqual(202)
-      expect(user.groupsRoles[0].groupName).toEqual('group001')
-      expect(user.groupsRoles[0].description).toEqual('oyp00vbye9jsnnzr')
+      expect(user.groupsRoles[0].groupId).toEqual(testGroup.id)
+      expect(user.groupsRoles[0].groupName).toEqual(testGroup.name)
+      expect(user.groupsRoles[0].description).toEqual(testGroup.description)
       expect(user.groupsRoles[0].roleName).toEqual('Admin')
       done();
     });

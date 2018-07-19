@@ -815,7 +815,8 @@ export namespace Model {
             }else{
               _columns[key] = new Date(parseInt(columns[key]));
             }
-          }else if(modelColumns[key]['type'] == DataType.Double){
+          }else if(modelColumns[key]['type'] == DataType.Double ||
+                   modelColumns[key]['type'] == DataType.Float ){
             if(columns[key] === ""){
               _columns[key] = null;
             }else{
@@ -834,6 +835,12 @@ export namespace Model {
             return;
           }
           if(columns[key] === null || columns[key] === undefined){
+            if(modelColumns[key]['type'] == DataType.DateTime){
+              _columns[key] = 0;
+            }
+            if(modelColumns[key]['type'] == DataType.Bool){
+              _columns[key] = 0;
+            }
             return;
           }
           if(modelColumns[key]['type'] == DataType.Bool){
@@ -843,18 +850,24 @@ export namespace Model {
               throw new Error(-1, 'invalid type: column ' + _className + '"."' + key + '"');
             }
             _columns[key] = columns[key].getTime();
-          }else if(modelColumns[key]['type'] == DataType.Double){
+          }else if(modelColumns[key]['type'] == DataType.Double ||
+                   modelColumns[key]['type'] == DataType.Float){
             if(typeof columns[key] == 'number'){
-              _columns[key] = columns[key] + "";
+              _columns[key] = columns[key];
             }else{
-              _columns[key] = parseFloat(columns[key]) + "";
+              _columns[key] = parseFloat(columns[key]);
+            }
+          }else if(modelColumns[key]['type'] == DataType.Decimal){
+            _columns[key] = columns[key] + "";
+            if((columns[key]+"").match(/^[1-9][0-9]{0,19}(.[0-9]{1,18})/) === null) {
+              throw new Error(-1, 'invalid type: column ' + _className + '"."' + key + '"');
             }
           }
         });
         if(isCreate){
-          _columns['createTime'] = Date.now()/1000;
+          _columns['createTime'] = Math.floor(Date.now()/1000) + "";
         }
-        _columns['updateTime'] = Date.now()/1000;
+        _columns['updateTime'] = Math.floor(Date.now()/1000) + "";
         return classList[_className].filterDefinedColumnOnly(_columns);
       }
 
@@ -1059,10 +1072,10 @@ export namespace Model {
     limit(...args){
       this._queryObj['range'] = {
         limit: args[0] || 1000,
-        offset: 1
+        offset: 0
       };
       if(args.length == 2){
-        this._queryObj['range']['offset'] = args[1]+1;
+        this._queryObj['range']['offset'] = args[1];
       }
       return this;
     }
@@ -1075,7 +1088,7 @@ export namespace Model {
     findOne(){
       this._queryObj['range'] = this._queryObj['range'] || {
         limit: 1,
-        offset: 1
+        offset: 0
       };
       if(this._useLocal){
         return this._queryToLocal()
@@ -1121,7 +1134,7 @@ export namespace Model {
             if(className == this._class.className){
               classObj = this._class;
             }
-            const models = obj[key] ? obj[key] : obj[className];
+            const models = (obj[key] ? obj[key] : obj[className]) || [];
             models.forEach((valval, idx) => {
               ret[key].push( createModelInstance(className, valval, classObj) );
             });

@@ -68,7 +68,7 @@ describe('Group管理APIのテスト', function(){
       .then(function(groups){
         expect(groups instanceof Array).toBeTruthy();
         var delGroups = groups.filter(function(group){
-          return group.groupId != 202
+          return group.groupId != testGroup.id
         });
         return Promise.all(
           delGroups.map(function(group){
@@ -88,7 +88,7 @@ describe('Group管理APIのテスト', function(){
         var targetGroup = null;
         expect(groups instanceof Array).toBeTruthy();
         groups.forEach(function(group){
-          if(group.groupId == 202){
+          if(group.groupId == testGroup.id){
             targetGroup = group;
           }
         });
@@ -108,7 +108,8 @@ describe('Group管理APIのテスト', function(){
       .then(function(group){
         expect(group.description).toEqual(beforeDescription);
         done();
+      }).catch(function(err){
+        done.fail(JSON.stringify(err));
       });
-
   });
 });
