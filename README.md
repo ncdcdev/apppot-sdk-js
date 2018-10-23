@@ -4,26 +4,27 @@
 
 [![npm version](https://badge.fury.io/js/apppot-sdk.svg)](https://badge.fury.io/js/apppot-sdk)
 
-AppPot SDK for JavaScript, available for browsers and smart devices, or Node.js.
+AppPot SDK for JavaScript.
 
-## How to Use
+## Getting Started
 
-### install
-To use the SDK in the browser, add the following script tag to your HTML page
+### インストール
+ブラウザ上で利用する場合は、以下のタグをHTMLに追記して下さい。
 
 ```html
 <script src="https://cdn.rawgit.com/NCDCHub/apppot-sdk-js/v2.3/dist/apppot.min.js"></script>
 ```
   
-To use in the Node.js, use the [npm](http://npmjs.org) package manager. Type the following into a terminal.
+
+Webpackなどの、Node.jsのビルドシステムで利用する場合は、[npm](http://npmjs.org)で以下の様にインストールしてください。
 
 ```sh
 npm install apppot-sdk
 ```
 
-### configure
-As follows, configure the connection destination and apps information like following.
-(`url`, `appId`, `appKey`, `appVersion`, `companyId` and `groupId` should be set a value corresponding to the environment.)
+### 設定
+以下の様に、接続設定をします。
+url, appId, appKey, appVersion, companyidは、ご利用になるAppPotサーバーの管理コンソール上で設定したものを使用します。
 
 ```javascript
 var window.AppPot = AppPotSDK.getService({
@@ -32,12 +33,12 @@ var window.AppPot = AppPotSDK.getService({
   appKey: '1234567890abcdef1234567890abcdef',
   appVersion: '1.0.0',
   companyId: 1,
-  groupId: 1
 });
 ```
 
-### define models
-Define models for your App.
+### モデル定義
+アプリケーションで使用するモデルを定義します。
+ここで定義したモデルを元に、サーバーのデータベース上にテーブルが生成されます。
 
 ```javascript
 window.Models = {
@@ -71,8 +72,8 @@ window.Models = {
 };
 ```
 
-### create database
-Create DataBase for your App.
+### データベースの作成
+先程定義したモデルを使って、テーブルを生成します。
 
 ```javascript
 AppPot.createDatabase(Object.values(window.Models))
@@ -80,10 +81,14 @@ AppPot.createDatabase(Object.values(window.Models))
     console.log('database is created!!');
   });
 ```
-  
-## Other API or usage
-You can find a documents at:  
-http://docs.apppot.jp/apppot/index.html
+
+### 終わり
+ここまでで、AppPotSDKを利用する準備ができました。
+
+
+## 詳細
+詳しい利用方法などは以下を参照してください。
+[http://docs.apppot.jp/apppot/sdk-javascript.html](http://docs.apppot.jp/apppot/sdk-javascript.html)
 
 
 ## License
