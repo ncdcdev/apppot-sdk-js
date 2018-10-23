@@ -148,7 +148,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._localDb;
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1531098599) || "unknown";
+	        return (1540289415) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
 	        return (["3","0","0"]).join('.') || "unknown";
@@ -5829,10 +5829,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    var _params = params ? params : {};
 	    var _body = body ? body : undefined;
-	    if (!(_body instanceof Array) &&
-	        _body !== undefined) {
-	        _body = [_body];
-	    }
 	    var _url = url.replace(/^\//, '').replace(/\/$/, '');
 	    return new es6_promise_1.Promise(function (resolve, reject) {
 	        func("gateway/" + serviceName + "/" + _response + "/" + _url).set(_headers).query(_params).send(_body).end(function (err, res) {

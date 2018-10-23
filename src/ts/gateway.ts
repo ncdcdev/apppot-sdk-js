@@ -28,10 +28,6 @@ function request(func: Function, serviceName: String, url: String, params?: Obje
 
   let _params = params ? params : {};
   let _body = body ? body : undefined;
-  if( !(_body instanceof Array) &&
-      _body !== undefined ){
-    _body = [_body];
-  }
 
   let _url = url.replace(/^\//, '').replace(/\/$/, '');
   return new Promise( ( resolve, reject ) => {
