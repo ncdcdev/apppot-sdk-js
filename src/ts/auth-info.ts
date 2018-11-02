@@ -9,6 +9,7 @@ export class AuthInfo implements Serializable {
 
   private _token: string = '';
   private _user: any;
+  private _anonymousUser: any;
   private apppot;
 
   constructor(apppot){
@@ -27,8 +28,16 @@ export class AuthInfo implements Serializable {
     return this._user;
   }
 
+  getAnonymousUser(){
+    return this._anonymousUser;
+  }
+
   setUser(user){
     this._user = user;
+  }
+
+  setAnonymousUser(user){
+    this._anonymousUser = user;
   }
 
   setToken(token){

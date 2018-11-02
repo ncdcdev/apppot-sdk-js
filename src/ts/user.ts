@@ -194,20 +194,23 @@ export class GroupsRoles {
   private _roleName;
   private _groupName;
   private _description;
+  private _roleId;
   constructor(args){
     if(args instanceof GroupsRoles){
       return args;
     }
     //restore
-    if(args._groupId && args._groupName && args._roleName){
+    if(args._groupId && args._groupName && args._roleName && args._roleId){
       this._groupId = args._groupId;
       this._groupName = args._groupName;
       this._roleName = args._roleName;
+      this._roleId = args._roleId;
       return this;
     }
     if(args.group && args.role){
       this._groupId = args.group.groupId;
       this._roleName = args.role.roleName;
+      this._roleId = args.role.roleId;
       this._groupName = args.group.groupName;
     }
     if(args.groupId){
@@ -215,6 +218,9 @@ export class GroupsRoles {
     }
     if(args.roleName && !this._roleName){
       this._roleName = args.roleName;
+    }
+    if(args.roleId && !this._roleId){
+      this._roleId = args.roleId;
     }
     if(args.role && !this._roleName){
       console.log('[WARN] roleId or Role enumerator will be can no longer be specify to create GroupsRoles Instance.');
@@ -260,6 +266,10 @@ export class GroupsRoles {
 
   get roleName(){
     return this._roleName;
+  }
+
+  get roleId(){
+    return this._roleId;
   }
 
   getGroupsRolesForUserAPI(){

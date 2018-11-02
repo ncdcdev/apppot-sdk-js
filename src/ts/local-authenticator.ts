@@ -13,34 +13,51 @@ export class LocalAuthenticator {
     this._appPot = appPot;
   }
 
-  login = (user: string, pass: string, isPush?: boolean, device?: Device) => {
-    return this.getAnonymousToken(device)
-      .then(()=>{
-        if(isPush && device){
-          return this.devices(device);
-        }else{
-          return true;
-        }
-      })
-      .then(()=>{ return this.apiLogin(user, pass, isPush, device); });
+  login = (user: string, pass: string) => {
+    return this.apiLogin(user, pass);
   }
 
   logout = () => {
     return this.apiLogout();
   }
 
+  setDevice = (device) => {
+    return this.devices(device);
+  }
+
   isLogined = () => {
     return this._isLogined;
   }
 
-  getAnonymousToken = (device?:Device) => {
+  getAnonymousToken = (account?: string) => {
     return new Promise((resolve, reject) => {
-      this._appPot.getAjax().get('anonymousTokens')
-        .query(`appKey=${this._appPot.getConfig().appKey}`)
-        .query(`deviceUDID=${device&&device.udid||this._appPot.getConfig().deviceUDID}`)
+      let sendOption = {
+        appKey:this._appPot.getConfig().appKey
+      }
+      const anonymousUser = this._appPot.getAuthInfo().getAnonymousUser();
+      if (account) {
+        sendOption['account'] = account;
+      } else {
+        if (anonymousUser) {
+          sendOption['account'] = anonymousUser.account;
+        }
+      }
+      this._appPot.getAjax().post('anonymousTokens')
+        .send(sendOption)
         .end(Ajax.end(resolve, reject, (obj) => {
-          this._appPot.getAuthInfo().setToken(obj.results);
-          resolve(obj.results);
+          this._appPot.getAuthInfo().setToken(obj.authInfo.userTokens);
+          if (!anonymousUser) {
+            const user = new (this._appPot.User)(
+              objectAssign(
+                {},
+                obj.authInfo,
+                obj.authInfo['userInfo'],
+                {groupsRoles:obj.authInfo['groupsAndRoles']}
+              )
+            );
+            this._appPot.getAuthInfo().setAnonymousUser(user);
+          }
+          resolve(this._appPot.getAuthInfo());
         }));
     });
   }
@@ -56,37 +73,29 @@ export class LocalAuthenticator {
           osType: device.osType
         })
         .end(Ajax.end(resolve, reject, (obj) => {
-          resolve();
+          resolve(obj);
         }));
     });
   }
 
-  private apiLogin(user:string, pass:string, isPush:boolean,  device?:Device){
+  private apiLogin(user:string, pass:string){
     this._appPot.getAuthInfo().clearUser();
     return new Promise((resolve, reject) => {
       this._appPot.getAjax().post('auth/login')
-        .set('apppot-token', this._appPot.getAuthInfo().getToken())
         .send({
-          username: user,
+          account: user,
           password: pass,
-          appId: this._appPot.getConfig().appId,
-          deviceUDID: device ? device.udid : this._appPot.getConfig().deviceUDID,
-          isPush: !!isPush,
-          appVersion: this._appPot.getConfig().appVersion,
-          companyId: this._appPot.getConfig().companyId
+          appKey: this._appPot.getConfig().appKey
         })
         .end(Ajax.end(
           (obj) => {
-            if(obj.authInfor){
-              obj.authInfo = obj.authInfor;
-              delete obj.authInfor;
-            }
             this._appPot.getAuthInfo().setToken(obj.authInfo.userTokens);
             const user = new (this._appPot.User)(
               objectAssign(
                 {},
                 obj.authInfo,
-                obj.authInfo['userInfo']
+                obj.authInfo['userInfo'],
+                {groupsRoles:obj.authInfo['groupsAndRoles']}
               )
             );
             this._appPot.getAuthInfo().setUser(user);

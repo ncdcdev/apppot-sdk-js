@@ -100,6 +100,9 @@ export class AppPot {
   getUser(){
     return this._authInfo.getUser();
   }
+  getAnonymousUser(){
+    return this._authInfo.getAnonymousUser();
+  }
   defineModel(className, modelColumns){
     return Model.define(this, className, modelColumns);
   }
