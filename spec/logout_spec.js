@@ -1,8 +1,16 @@
 describe('logoutのテスト', function(){
   beforeEach(function(done){
-    AppPot.LocalAuthenticator.login(account.username, account.password).then(function(){
-      done()
-    });
+    if (__karma__.config.login == 'anonymous') {
+      AppPot.LocalAuthenticator.getAnonymousToken()
+        .then(function(){
+          done()
+        });
+    } else {
+      AppPot.LocalAuthenticator.login(account.username, account.password)
+        .then(function(){
+          done()
+        });
+    }
   });
 
   it('ログアウト後に、認証に必要なAPI呼び出しに失敗する', function(done){

@@ -7,6 +7,7 @@
     "develop": "gulp develop",
     "build": "gulp build",
     "test": "karma start --browsers PhantomJS_debug --no-single-run",
+    "test:anonymous": "karma start --browsers PhantomJS_debug --no-single-run --login=anonymous",
     "test:ie10": "karma start --browsers 'IE10 - Win7'",
     "test:ie11": "karma start --browsers 'IE11 - Win7'",
     "test:edge": "karma start --browsers 'MSEdge - Win10'",

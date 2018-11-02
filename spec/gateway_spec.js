@@ -1,9 +1,16 @@
 describe('GatewayAPI', function(){
   beforeEach(function(done){
-    AppPot.LocalAuthenticator.login(account.username, account.password)
-    .then(function(){
-        done();
-    });
+    if (__karma__.config.login == 'anonymous') {
+      AppPot.LocalAuthenticator.getAnonymousToken()
+        .then(function(){
+          done()
+        });
+    } else {
+      AppPot.LocalAuthenticator.login(account.username, account.password)
+      .then(function(){
+          done();
+      });
+    }
   });
 
   const serviceName = 'mysql-service';

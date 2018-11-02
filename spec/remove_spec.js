@@ -19,33 +19,63 @@ describe('削除のテスト', function(){
     this.targetId = undefined;
     this.targetModel = undefined;
 
-    AppPot.LocalAuthenticator.login(account.username, account.password)
-    .then(function(){
-      return AppPot.dropAndCreateDatabase([
-        TaskModel,
-        PlaceModel
-      ]);
-    })
-    .then(function(result){
-      var models = [];
-      for(var i = 0; i < self.numOfTask; i++){
-        var index = leftPad(i+1, 2);
-        models.push(
-          new TaskModel({
-            title: 'remove_spec' + index,
-            description: 'test-description' + index,
-            limit: self.numOfTask-i
-          })
-        );
-      }
-      var promise = TaskModel.insertAll(models);
-      return promise
-    })
-    .then(function(models){
-      self.targetId = models[0].get('objectId');
-      self.targetModel = models[0];
-      done();
-    });
+    if (__karma__.config.login == 'anonymous') {
+      AppPot.LocalAuthenticator.getAnonymousToken()
+        .then(function(){
+          return AppPot.dropAndCreateDatabase([
+            TaskModel,
+            PlaceModel
+          ]);
+        })
+        .then(function(result){
+          var models = [];
+          for(var i = 0; i < self.numOfTask; i++){
+            var index = leftPad(i+1, 2);
+            models.push(
+              new TaskModel({
+                title: 'remove_spec' + index,
+                description: 'test-description' + index,
+                limit: self.numOfTask-i
+              })
+            );
+          }
+          var promise = TaskModel.insertAll(models);
+          return promise
+        })
+        .then(function(models){
+          self.targetId = models[0].get('objectId');
+          self.targetModel = models[0];
+          done();
+        });
+    } else {
+      AppPot.LocalAuthenticator.login(account.username, account.password)
+        .then(function(){
+          return AppPot.dropAndCreateDatabase([
+            TaskModel,
+            PlaceModel
+          ]);
+        })
+        .then(function(result){
+          var models = [];
+          for(var i = 0; i < self.numOfTask; i++){
+            var index = leftPad(i+1, 2);
+            models.push(
+              new TaskModel({
+                title: 'remove_spec' + index,
+                description: 'test-description' + index,
+                limit: self.numOfTask-i
+              })
+            );
+          }
+          var promise = TaskModel.insertAll(models);
+          return promise
+        })
+        .then(function(models){
+          self.targetId = models[0].get('objectId');
+          self.targetModel = models[0];
+          done();
+        });
+    }
   });
 
   it('指定したIDのレコードを削除できる', function(done){

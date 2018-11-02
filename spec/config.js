@@ -1,20 +1,19 @@
 window.AppPot = AppPotSDK.getService({
-  url: 'http://trial-ec2a-01.apppot.net/apppot20161007/',
+  url: 'http://trial.apppot.net/apppotv4/',
   appId: 'jp.co.ncdc.sdk',
-  appKey: '93df59e1b5334dedae76ba1942548528',
+  appKey: 'b8f7bcd6dd394d57bb9d34e31b8002e3',
   appVersion: '1.0.0',
-  companyId: 7,
+  companyId: 1,
 });
 
 window.account = {
-  userId: 49,
-  username: 'jssdk0001',
+  username: 'jssdk0003',
   password: 'aaaa'
 };
 
 window.testGroup = {
-  id: 47,
-  name: 'jssdk',
+  id: 2,
+  name: 'testgroup1',
   description: 'oyp00vbye9jsnnzr'
 };
 

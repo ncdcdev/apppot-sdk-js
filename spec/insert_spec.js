@@ -4,11 +4,19 @@ describe('insertのテスト', function(){
       TaskModel,
       PlaceModel
     ];
-    AppPot.LocalAuthenticator.login(account.username, account.password)
-      .then(AppPot.dropAndCreateDatabase(models))
-      .then(function(){
-        done()
-      });
+    if (__karma__.config.login == 'anonymous') {
+      AppPot.LocalAuthenticator.getAnonymousToken()
+        .then(AppPot.dropAndCreateDatabase(models))
+        .then(function(){
+          done()
+        });
+    } else {
+      AppPot.LocalAuthenticator.login(account.username, account.password)
+        .then(AppPot.dropAndCreateDatabase(models))
+        .then(function(){
+          done()
+        });
+    }
   });
 
   it('新しいレコードを作成できる', function(done){

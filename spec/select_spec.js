@@ -19,63 +19,123 @@ describe('複数取得のテスト', function(){
     this.numOfTask = 20;
     this.placeIds = [];
 
-    AppPot.LocalAuthenticator.login(account.username, account.password)
-    .then(function(){
-      return AppPot.dropAndCreateDatabase([
-        TaskModel,
-        PlaceModel
-      ])
-    })
-    .then(function(){
-      var models = [];
-      for(var i = 0; i < self.numOfPlace; i++){
-        var index = leftPad(i+1, 2);
-        models.push(
-          new PlaceModel({
-            zipcode: 'zip--' + index,
-            address: 'address:' + index,
-          })
-        );
-      }
-      var promise = PlaceModel.insertAll(models);
-      return promise
-    })
-    .then(function(models){
-      models.forEach(function(model){
-        self.placeIds.push(model.get('objectId'));
-      });
-    })
-    .then(function(){
-      var models = [];
-      for(var i = 0; i < (self.numOfTask - self.numOfPlace); i++){
-        var index = leftPad(i+1, 2);
-        models.push(
-          new TaskModel({
-            title: 'select_spec' + index,
-            description: 'test-descriptions' + index,
-            limit: self.numOfTask-i,
-            placeId: self.placeIds[i%self.numOfPlace]
-          })
-        )
-      }
-      for(var i = (self.numOfTask - self.numOfPlace); i < self.numOfTask; i++){
-        var index = leftPad(i+1, 2);
-        models.push(
-          new TaskModel({
-            title: 'select_spec' + index,
-            description: 'test-descriptions' + index,
-            limit: self.numOfTask-i,
-            placeId: self.placeIds[i%self.numOfPlace]
-            //placeId: null
-          })
-        )
-      }
-      var promise = TaskModel.insertAll(models);
-      return promise
-    })
-    .then(function(models){
-      done();
-    });
+    if (__karma__.config.login == 'anonymous') {
+      AppPot.LocalAuthenticator.getAnonymousToken()
+        .then(function(){
+          return AppPot.dropAndCreateDatabase([
+            TaskModel,
+            PlaceModel
+          ])
+        })
+        .then(function(){
+          var models = [];
+          for(var i = 0; i < self.numOfPlace; i++){
+            var index = leftPad(i+1, 2);
+            models.push(
+              new PlaceModel({
+                zipcode: 'zip--' + index,
+                address: 'address:' + index,
+              })
+            );
+          }
+          var promise = PlaceModel.insertAll(models);
+          return promise
+        })
+        .then(function(models){
+          models.forEach(function(model){
+            self.placeIds.push(model.get('objectId'));
+          });
+        })
+        .then(function(){
+          var models = [];
+          for(var i = 0; i < (self.numOfTask - self.numOfPlace); i++){
+            var index = leftPad(i+1, 2);
+            models.push(
+              new TaskModel({
+                title: 'select_spec' + index,
+                description: 'test-descriptions' + index,
+                limit: self.numOfTask-i,
+                placeId: self.placeIds[i%self.numOfPlace]
+              })
+            )
+          }
+          for(var i = (self.numOfTask - self.numOfPlace); i < self.numOfTask; i++){
+            var index = leftPad(i+1, 2);
+            models.push(
+              new TaskModel({
+                title: 'select_spec' + index,
+                description: 'test-descriptions' + index,
+                limit: self.numOfTask-i,
+                placeId: self.placeIds[i%self.numOfPlace]
+                //placeId: null
+              })
+            )
+          }
+          var promise = TaskModel.insertAll(models);
+          return promise
+        })
+        .then(function(models){
+          done();
+        });
+    } else {
+      AppPot.LocalAuthenticator.login(account.username, account.password)
+        .then(function(){
+          return AppPot.dropAndCreateDatabase([
+            TaskModel,
+            PlaceModel
+          ])
+        })
+        .then(function(){
+          var models = [];
+          for(var i = 0; i < self.numOfPlace; i++){
+            var index = leftPad(i+1, 2);
+            models.push(
+              new PlaceModel({
+                zipcode: 'zip--' + index,
+                address: 'address:' + index,
+              })
+            );
+          }
+          var promise = PlaceModel.insertAll(models);
+          return promise
+        })
+        .then(function(models){
+          models.forEach(function(model){
+            self.placeIds.push(model.get('objectId'));
+          });
+        })
+        .then(function(){
+          var models = [];
+          for(var i = 0; i < (self.numOfTask - self.numOfPlace); i++){
+            var index = leftPad(i+1, 2);
+            models.push(
+              new TaskModel({
+                title: 'select_spec' + index,
+                description: 'test-descriptions' + index,
+                limit: self.numOfTask-i,
+                placeId: self.placeIds[i%self.numOfPlace]
+              })
+            )
+          }
+          for(var i = (self.numOfTask - self.numOfPlace); i < self.numOfTask; i++){
+            var index = leftPad(i+1, 2);
+            models.push(
+              new TaskModel({
+                title: 'select_spec' + index,
+                description: 'test-descriptions' + index,
+                limit: self.numOfTask-i,
+                placeId: self.placeIds[i%self.numOfPlace]
+                //placeId: null
+              })
+            )
+          }
+          var promise = TaskModel.insertAll(models);
+          return promise
+        })
+        .then(function(models){
+          done();
+        });
+    }
   });
 
   it('条件無しですべてのレコードを取得できる', function(done){

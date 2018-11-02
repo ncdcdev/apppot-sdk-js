@@ -79,6 +79,10 @@ module.exports = function(config) {
       }
     },
 
+    client: {
+      login: config.login
+    },
+
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits

@@ -5,24 +5,45 @@ describe('単件取得のテスト', function(){
       TaskModel,
       PlaceModel
     ];
-    AppPot.LocalAuthenticator.login(account.username, account.password)
-    .then(AppPot.dropAndCreateDatabase(models))
-    .then(function(){
-      self.columns = {
-        title: 'find_spec',
-        description: 'test-description',
-        num: 2,
-        value: '12345678901234567890.123456789012345678',
-        done: false,
-        registeredDate: new Date()
-      };
-      var promise = TaskModel.insert(self.columns);
-      return promise
-    })
-    .then(function(model){
-        self.objectId = model.get('objectId');
-        done();
-    });
+    if (__karma__.config.login == 'anonymous') {
+      AppPot.LocalAuthenticator.getAnonymousToken()
+        .then(AppPot.dropAndCreateDatabase(models))
+        .then(function(){
+          self.columns = {
+            title: 'find_spec',
+            description: 'test-description',
+            num: 2,
+            value: '12345678901234567890.123456789012345678',
+            done: false,
+            registeredDate: new Date()
+          };
+          var promise = TaskModel.insert(self.columns);
+          return promise
+        })
+        .then(function(model){
+            self.objectId = model.get('objectId');
+            done();
+        });
+    } else {
+      AppPot.LocalAuthenticator.login(account.username, account.password)
+        .then(AppPot.dropAndCreateDatabase(models))
+        .then(function(){
+          self.columns = {
+            title: 'find_spec',
+            description: 'test-description',
+            num: 2,
+            value: '12345678901234567890.123456789012345678',
+            done: false,
+            registeredDate: new Date()
+          };
+          var promise = TaskModel.insert(self.columns);
+          return promise
+        })
+        .then(function(model){
+            self.objectId = model.get('objectId');
+            done();
+        });
+    }
   });
 
   it('idで一件のレコードを取得できる', function(done){

@@ -3,10 +3,17 @@ describe('Group管理APIのテスト', function(){
   beforeEach(function(done){
     originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 30000;
-    AppPot.LocalAuthenticator.login(account.username, account.password)
-      .then(function(){
-        done();
-      });
+    if (__karma__.config.login == 'anonymous') {
+      AppPot.LocalAuthenticator.getAnonymousToken()
+        .then(function(){
+          done()
+        });
+    } else {
+      AppPot.LocalAuthenticator.login(account.username, account.password)
+        .then(function(){
+          done();
+        });
+    }
   });
 
   afterEach(function(){
@@ -24,35 +31,43 @@ describe('Group管理APIのテスト', function(){
   }
   var groupInfo = {
     groupName: randomString(16),
-    description: randomString(16) 
+    description: randomString(16)
   };
 
   it('グループを作成・削除できる', function(done){
-    var group = new AppPot.Group(groupInfo);
-
-    group.create().then(function(createdGroup){
-      expect(group.groupName).toEqual(createdGroup.groupName);
-      expect(group.description).toEqual(createdGroup.description);
-      return createdGroup.remove();
-    }).then(function(){
+    if (__karma__.config.login == 'anonymous') {
       done();
-    });
+    } else {
+      var group = new AppPot.Group(groupInfo);
+
+      group.create().then(function(createdGroup){
+        expect(group.groupName).toEqual(createdGroup.groupName);
+        expect(group.description).toEqual(createdGroup.description);
+        return createdGroup.remove();
+      }).then(function(){
+        done();
+      });
+    }
   });
 
   it('グループを作成できる(App登録あり)', function(done){
-    var groupInfoAddApp = {
-      groupName: randomString(16),
-      description: randomString(16),
-      isAddCurrentApp: true
-    };
-    var group = new AppPot.Group(groupInfoAddApp);
-
-    group.create().then(function(createdGroup){
-      expect(group.groupName).toEqual(createdGroup.groupName);
-      expect(group.description).toEqual(createdGroup.description);
-    }).then(function(){
+    if (__karma__.config.login == 'anonymous') {
       done();
-    });
+    } else {
+      var groupInfoAddApp = {
+        groupName: randomString(16),
+        description: randomString(16),
+        isAddCurrentApp: true
+      };
+      var group = new AppPot.Group(groupInfoAddApp);
+
+      group.create().then(function(createdGroup){
+        expect(group.groupName).toEqual(createdGroup.groupName);
+        expect(group.description).toEqual(createdGroup.description);
+      }).then(function(){
+        done();
+      });
+    }
   });
 
   it('グループ一覧を取得できる', function(done){
@@ -64,52 +79,60 @@ describe('Group管理APIのテスト', function(){
   });
 
   it('グループ削除できる', function(done){
-    AppPot.Group.list()
-      .then(function(groups){
-        expect(groups instanceof Array).toBeTruthy();
-        var delGroups = groups.filter(function(group){
-          return group.groupId != testGroup.id
+    if (__karma__.config.login == 'anonymous') {
+      done();
+    } else {
+      AppPot.Group.list()
+        .then(function(groups){
+          expect(groups instanceof Array).toBeTruthy();
+          var delGroups = groups.filter(function(group){
+            return group.groupId != testGroup.id
+          });
+          return Promise.all(
+            delGroups.map(function(group){
+              return group.remove({timeout:30000});
+            })
+          );
+        }).then(function(){
+          done();
         });
-        return Promise.all(
-          delGroups.map(function(group){
-            return group.remove({timeout:30000});
-          })
-        );
-      }).then(function(){
-        done();
-      });
+    }
   });
 
   it('グループの情報を更新できる', function(done){
-    var updatedDescription = randomString(16);
-    var beforeDescription;
-    AppPot.Group.list()
-      .then(function(groups){
-        var targetGroup = null;
-        expect(groups instanceof Array).toBeTruthy();
-        groups.forEach(function(group){
-          if(group.groupId == testGroup.id){
-            targetGroup = group;
-          }
+    if (__karma__.config.login == 'anonymous') {
+      done();
+    } else {
+      var updatedDescription = randomString(16);
+      var beforeDescription;
+      AppPot.Group.list()
+        .then(function(groups){
+          var targetGroup = null;
+          expect(groups instanceof Array).toBeTruthy();
+          groups.forEach(function(group){
+            if(group.groupId == testGroup.id){
+              targetGroup = group;
+            }
+          });
+          expect(targetGroup).not.toBeNull();
+          beforeDescription = targetGroup.description;
+          return targetGroup.update({
+            description: updatedDescription
+          });
+        })
+        .then(function(group){
+          expect(group.description).toEqual(updatedDescription);
+          // tearDownのために最初のdescriptionに戻す。
+          return group.update({
+            description: beforeDescription
+          });
+        })
+        .then(function(group){
+          expect(group.description).toEqual(beforeDescription);
+          done();
+        }).catch(function(err){
+          done.fail(JSON.stringify(err));
         });
-        expect(targetGroup).not.toBeNull();
-        beforeDescription = targetGroup.description;
-        return targetGroup.update({
-          description: updatedDescription
-        });
-      })
-      .then(function(group){
-        expect(group.description).toEqual(updatedDescription);
-        // tearDownのために最初のdescriptionに戻す。
-        return group.update({
-          description: beforeDescription
-        });
-      })
-      .then(function(group){
-        expect(group.description).toEqual(beforeDescription);
-        done();
-      }).catch(function(err){
-        done.fail(JSON.stringify(err));
-      });
+    }
   });
 });
