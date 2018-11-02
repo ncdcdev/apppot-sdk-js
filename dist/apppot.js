@@ -132,6 +132,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    AppPot.prototype.getUser = function () {
 	        return this._authInfo.getUser();
 	    };
+	    AppPot.prototype.getAnonymousUser = function () {
+	        return this._authInfo.getAnonymousUser();
+	    };
 	    AppPot.prototype.defineModel = function (className, modelColumns) {
 	        return model_1.Model.define(this, className, modelColumns);
 	    };
@@ -148,7 +151,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._localDb;
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1540289415) || "unknown";
+	        return (1541125252) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
 	        return (["3","0","0"]).join('.') || "unknown";
@@ -367,8 +370,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    AuthInfo.prototype.getUser = function () {
 	        return this._user;
 	    };
+	    AuthInfo.prototype.getAnonymousUser = function () {
+	        return this._anonymousUser;
+	    };
 	    AuthInfo.prototype.setUser = function (user) {
 	        this._user = user;
+	    };
+	    AuthInfo.prototype.setAnonymousUser = function (user) {
+	        this._anonymousUser = user;
 	    };
 	    AuthInfo.prototype.setToken = function (token) {
 	        this._token = token;
@@ -2156,32 +2165,41 @@ return /******/ (function(modules) { // webpackBootstrap
 	var LocalAuthenticator = (function () {
 	    function LocalAuthenticator(appPot) {
 	        var _this = this;
-	        this.login = function (user, pass, isPush, device) {
-	            return _this.getAnonymousToken(device)
-	                .then(function () {
-	                if (isPush && device) {
-	                    return _this.devices(device);
-	                }
-	                else {
-	                    return true;
-	                }
-	            })
-	                .then(function () { return _this.apiLogin(user, pass, isPush, device); });
+	        this.login = function (user, pass) {
+	            return _this.apiLogin(user, pass);
 	        };
 	        this.logout = function () {
 	            return _this.apiLogout();
 	        };
+	        this.setDevice = function (device) {
+	            return _this.devices(device);
+	        };
 	        this.isLogined = function () {
 	            return _this._isLogined;
 	        };
-	        this.getAnonymousToken = function (device) {
+	        this.getAnonymousToken = function (account) {
 	            return new es6_promise_1.Promise(function (resolve, reject) {
-	                _this._appPot.getAjax().get('anonymousTokens')
-	                    .query("appKey=" + _this._appPot.getConfig().appKey)
-	                    .query("deviceUDID=" + (device && device.udid || _this._appPot.getConfig().deviceUDID))
+	                var sendOption = {
+	                    appKey: _this._appPot.getConfig().appKey
+	                };
+	                var anonymousUser = _this._appPot.getAuthInfo().getAnonymousUser();
+	                if (account) {
+	                    sendOption['account'] = account;
+	                }
+	                else {
+	                    if (anonymousUser) {
+	                        sendOption['account'] = anonymousUser.account;
+	                    }
+	                }
+	                _this._appPot.getAjax().post('anonymousTokens')
+	                    .send(sendOption)
 	                    .end(ajax_1.Ajax.end(resolve, reject, function (obj) {
-	                    _this._appPot.getAuthInfo().setToken(obj.results);
-	                    resolve(obj.results);
+	                    _this._appPot.getAuthInfo().setToken(obj.authInfo.userTokens);
+	                    if (!anonymousUser) {
+	                        var user = new (_this._appPot.User)(objectAssign({}, obj.authInfo, obj.authInfo['userInfo'], { groupsRoles: obj.authInfo['groupsAndRoles'] }));
+	                        _this._appPot.getAuthInfo().setAnonymousUser(user);
+	                    }
+	                    resolve(_this._appPot.getAuthInfo());
 	                }));
 	            });
 	        };
@@ -2199,32 +2217,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	                osType: device.osType
 	            })
 	                .end(ajax_1.Ajax.end(resolve, reject, function (obj) {
-	                resolve();
+	                resolve(obj);
 	            }));
 	        });
 	    };
-	    LocalAuthenticator.prototype.apiLogin = function (user, pass, isPush, device) {
+	    LocalAuthenticator.prototype.apiLogin = function (user, pass) {
 	        var _this = this;
 	        this._appPot.getAuthInfo().clearUser();
 	        return new es6_promise_1.Promise(function (resolve, reject) {
 	            _this._appPot.getAjax().post('auth/login')
-	                .set('apppot-token', _this._appPot.getAuthInfo().getToken())
 	                .send({
-	                username: user,
+	                account: user,
 	                password: pass,
-	                appId: _this._appPot.getConfig().appId,
-	                deviceUDID: device ? device.udid : _this._appPot.getConfig().deviceUDID,
-	                isPush: !!isPush,
-	                appVersion: _this._appPot.getConfig().appVersion,
-	                companyId: _this._appPot.getConfig().companyId
+	                appKey: _this._appPot.getConfig().appKey
 	            })
 	                .end(ajax_1.Ajax.end(function (obj) {
-	                if (obj.authInfor) {
-	                    obj.authInfo = obj.authInfor;
-	                    delete obj.authInfor;
-	                }
 	                _this._appPot.getAuthInfo().setToken(obj.authInfo.userTokens);
-	                var user = new (_this._appPot.User)(objectAssign({}, obj.authInfo, obj.authInfo['userInfo']));
+	                var user = new (_this._appPot.User)(objectAssign({}, obj.authInfo, obj.authInfo['userInfo'], { groupsRoles: obj.authInfo['groupsAndRoles'] }));
 	                _this._appPot.getAuthInfo().setUser(user);
 	                _this._isLogined = true;
 	                resolve(_this._appPot.getAuthInfo());
@@ -5516,15 +5525,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return args;
 	        }
 	        //restore
-	        if (args._groupId && args._groupName && args._roleName) {
+	        if (args._groupId && args._groupName && args._roleName && args._roleId) {
 	            this._groupId = args._groupId;
 	            this._groupName = args._groupName;
 	            this._roleName = args._roleName;
+	            this._roleId = args._roleId;
 	            return this;
 	        }
 	        if (args.group && args.role) {
 	            this._groupId = args.group.groupId;
 	            this._roleName = args.role.roleName;
+	            this._roleId = args.role.roleId;
 	            this._groupName = args.group.groupName;
 	        }
 	        if (args.groupId) {
@@ -5532,6 +5543,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (args.roleName && !this._roleName) {
 	            this._roleName = args.roleName;
+	        }
+	        if (args.roleId && !this._roleId) {
+	            this._roleId = args.roleId;
 	        }
 	        if (args.role && !this._roleName) {
 	            console.log('[WARN] roleId or Role enumerator will be can no longer be specify to create GroupsRoles Instance.');
@@ -5588,6 +5602,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Object.defineProperty(GroupsRoles.prototype, "roleName", {
 	        get: function () {
 	            return this._roleName;
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    Object.defineProperty(GroupsRoles.prototype, "roleId", {
+	        get: function () {
+	            return this._roleId;
 	        },
 	        enumerable: true,
 	        configurable: true
