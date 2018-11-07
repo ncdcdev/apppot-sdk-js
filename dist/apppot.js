@@ -151,10 +151,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._localDb;
 	    };
 	    AppPot.prototype.getBuildDate = function () {
-	        return (1541125252) || "unknown";
+	        return (1541574180) || "unknown";
 	    };
 	    AppPot.prototype.getVersion = function () {
-	        return (["3","0","0"]).join('.') || "unknown";
+	        return (["4","0","0"]).join('.') || "unknown";
 	    };
 	    AppPot.prototype.log = function (str, level) {
 	        var _this = this;
