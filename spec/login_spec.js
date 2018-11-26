@@ -28,6 +28,21 @@ describe('loginのテスト', function(){
     });
   });
 
+  it('AnonymousTokenでデバイス登録ができる', function(done){
+    var device = new AppPot.Device({
+      token: "Anonymous device token",
+      osType: "iOS",
+      name: "iPhone X",
+      udid: "90284830E1DA-2C5B-4F97-BC61-E9J5J94J"
+    });
+
+    AppPot.LocalAuthenticator.setDevice(device)
+    .then(function(result){
+      expect(result.errCode).toEqual(0)
+      done();
+    })
+  })
+
   it('正しいid/passの組み合わせでログインできる', function(done){
     AppPot.LocalAuthenticator.login(account.username, account.password)
     .then(function(authInfo){
@@ -52,12 +67,14 @@ describe('loginのテスト', function(){
   });
 
   it('ログイン後、デバイス登録ができる', function(done){
-    AppPot.LocalAuthenticator.setDevice({
-     token: "device token 1",
-     osType: "iOS",
-     name: "iPhone X",
-     udid: "E9J5J94J-2C5B-4F97-BC61-90284830E1DA"
-    })
+    var device = new AppPot.Device({
+      token: "device token 1",
+      osType: "iOS",
+      name: "iPhone X",
+      udid: "E9J5J94J-2C5B-4F97-BC61-90284830E1DA"
+    });
+
+    AppPot.LocalAuthenticator.setDevice(device)
     .then(function(result){
       expect(result.errCode).toEqual(0)
       done();
