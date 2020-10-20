@@ -1,3 +1,10 @@
+import {
+  AppPot,
+  TaskModel,
+  PlaceModel,
+  account
+} from './config';
+
 describe('insertのテスト', function(){
   beforeEach(function(done){
     var models = [

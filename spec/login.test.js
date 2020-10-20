@@ -1,3 +1,10 @@
+import {
+  AppPot,
+  TaskModel,
+  PlaceModel,
+  account
+} from './config';
+
 describe('loginのテスト', function(){
   it('AnonymousTokenが取得できる', function(done){
     AppPot.LocalAuthenticator.getAnonymousToken()

@@ -1,4 +1,6 @@
-window.AppPot = AppPotSDK.getService({
+import AppPotSDK from '../dist/apppot.js';
+
+export const AppPot = AppPotSDK.getService({
   url: 'http://trial-ec2a-01.apppot.net/apppot/',
   appId: 'jp.co.ncdc.sdk',
   appKey: '10fcdcde414145f18d890518d0333607',
@@ -6,13 +8,13 @@ window.AppPot = AppPotSDK.getService({
   companyId: 4,
 });
 
-window.account = {
+export const account = {
   userId: 205,
   username: 'user001',
   password: 'aaaa'
 };
 
-window.TaskModel = AppPot.defineModel('Task', {
+export const TaskModel = AppPot.defineModel('Task', {
     'title': {
       type: AppPot.DataType.Varchar,
       length: 100,
@@ -45,7 +47,7 @@ window.TaskModel = AppPot.defineModel('Task', {
   }
 );
 
-window.PlaceModel = AppPot.defineModel('Place', {
+export const PlaceModel = AppPot.defineModel('Place', {
   'zipcode': {
     type: AppPot.DataType.Varchar,
     length: 7
@@ -56,4 +58,4 @@ window.PlaceModel = AppPot.defineModel('Place', {
   }
 });
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;
+// jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;

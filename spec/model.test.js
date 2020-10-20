@@ -1,3 +1,10 @@
+import {
+  AppPot,
+  TaskModel,
+  PlaceModel,
+  account
+} from './config';
+
 describe('Modelのテスト', function(){
   beforeEach(function(done){
 

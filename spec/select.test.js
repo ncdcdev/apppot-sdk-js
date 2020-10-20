@@ -1,3 +1,10 @@
+import {
+  AppPot,
+  TaskModel,
+  PlaceModel,
+  account
+} from './config';
+
 describe('複数取得のテスト', function(){
   beforeEach(function(done){
 

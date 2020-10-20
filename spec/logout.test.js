@@ -1,3 +1,10 @@
+import {
+  AppPot,
+  TaskModel,
+  PlaceModel,
+  account
+} from './config';
+
 describe('logoutのテスト', function(){
   beforeEach(function(done){
     AppPot.LocalAuthenticator.login(account.username, account.password).then(function(){

@@ -1,3 +1,10 @@
+import {
+  AppPot,
+  TaskModel,
+  PlaceModel,
+  account
+} from './config'
+
 describe('単件取得のテスト', function(){
   beforeEach(function(done){
     var self = this;
