@@ -3,7 +3,6 @@ import {Ajax} from './ajax';
 import {Error} from './error';
 import {AppPot} from './apppot';
 import * as moment from 'moment';
-import {Promise} from 'es6-promise';
 import {Database} from './database';
 import SqliteClauseTranslator from './sqlite-clause-translator.ts';
 const objectAssign = require('object-assign');
@@ -773,7 +772,7 @@ export namespace Model {
         return this;
       }
 
-      static const noNeedColumns = [
+      static noNeedColumns = [
         'groupIds',
       ]
 

@@ -14,7 +14,6 @@ import {getFileClass} from './file';
 import {getGateway} from './gateway';
 import {DataType} from './types';
 import {Error} from './error';
-import {Promise} from 'es6-promise';
 
 export class AppPot {
   private _config: Config;

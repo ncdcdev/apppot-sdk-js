@@ -20,7 +20,7 @@ module.exports = function(config) {
       'dist/apppot.js',
       'spec/config.js',
 
-      'spec/**/*_spec.js'
+      'spec/**/*.test.js'
     ],
 
 
@@ -62,9 +62,9 @@ module.exports = function(config) {
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     browsers: [
       //'Safari',
-      //'Chrome',
+      'Chrome',
       //'PhantomJS',
-      'PhantomJS_debug',
+      //'PhantomJS_debug',
       //'Firefox',
       //'IE10 - Win7',
       //'IE11 - Win7'

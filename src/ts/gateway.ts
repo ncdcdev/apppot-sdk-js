@@ -1,5 +1,4 @@
 import {AppPot} from './apppot';
-import {Promise} from 'es6-promise';
 const objectAssign = require('object-assign');
 
 interface GatewayOptions {

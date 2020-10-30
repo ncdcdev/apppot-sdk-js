@@ -1,6 +1,5 @@
 import {Ajax, AjaxOptions} from './ajax';
 import {AppPot} from './apppot';
-import {Promise} from 'es6-promise';
 
 export function getUserClass(appPot:AppPot){
   return class User {
@@ -90,11 +89,12 @@ export function getUserClass(appPot:AppPot){
     }
 
     private static _isNumber(x){
-      if( typeof(x) != 'number' && typeof(x) != 'string' ){
-        return false;
-      }else{
-        return (x == parseFloat(x) && isFinite(x));
+      if (typeof(x) === 'number') {
+        return Number.isInteger(x);
+      } else if(typeof(x) === 'string') {
+        return Number.isInteger(Number.parseInt(x));
       }
+      return false;
     }
 
     static findById(userId, options?: AjaxOptions){

@@ -3,7 +3,6 @@ import {DataType} from './types';
 import {Ajax} from './ajax';
 import {Config} from './config';
 import {AuthInfo} from './auth-info';
-import {Promise} from 'es6-promise';
 import {Error} from './error';
 
 export class Database {

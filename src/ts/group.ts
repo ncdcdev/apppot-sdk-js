@@ -1,6 +1,5 @@
 import {Ajax, AjaxOptions} from './ajax';
 import {AppPot} from './apppot';
-import {Promise} from 'es6-promise';
 
 export function getGroupClass(appPot:AppPot){
   return class Group {

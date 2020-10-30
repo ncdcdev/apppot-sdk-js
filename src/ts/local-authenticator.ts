@@ -1,6 +1,5 @@
 import {Ajax} from './ajax';
 import {AppPot} from './apppot';
-import {Promise} from 'es6-promise';
 import Device from './device';
 const objectAssign = require('object-assign');
 

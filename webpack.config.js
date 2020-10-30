@@ -8,21 +8,26 @@ let webpackConfig = {
   },
   output: {
     filename: 'apppot.js',
-    library: ['AppPotSDK'],
+    path: path.join(__dirname, 'dist'),
+    library: 'AppPotSDK',
     //libraryTarget: 'var'
     libraryTarget: 'umd'
   },
+  optimization: {
+    minimize: false
+  },
+  target: "node",
   resolve: {
-    root: [path.join(__dirname)],
-    extensions: ['', '.ts', '.webpack.js', '.web.js', '.js']
+    roots: [path.join(__dirname)],
+    extensions: ['.ts', '.js']
   },
   module: {
-    loaders: [
-      {
-        test: /\.ts$/,
-        loader: 'ts-loader'
-      }
-    ]
+    rules: [{
+      test: /\.ts$/,
+      use: [
+        'ts-loader'
+      ]
+    }]
   },
   plugins: [
     new webpack.DefinePlugin({
@@ -36,16 +41,5 @@ let webpackConfig = {
     __dirname: true,
   }
 };
-
-if(env == 'production'){
-  webpackConfig['plugins'].push(
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false,
-        drop_console: true
-      },
-    })
-  );
-}
 
 module.exports = webpackConfig;
