@@ -12,7 +12,7 @@ describe('insertのテスト', function(){
       PlaceModel
     ];
     AppPot.LocalAuthenticator.login(account.username, account.password)
-      .then(AppPot.dropAndCreateDatabase(models))
+      .then(() => AppPot.dropAndCreateDatabase(models))
       .then(function(){
         done()
       });

@@ -13,7 +13,7 @@ describe('単件取得のテスト', function(){
       PlaceModel
     ];
     AppPot.LocalAuthenticator.login(account.username, account.password)
-    .then(AppPot.dropAndCreateDatabase(models))
+    .then(() => AppPot.dropAndCreateDatabase(models))
     .then(function(){
       self.columns = {
         title: 'find_spec',
