@@ -1,4 +1,4 @@
-/// <reference path="../../typings/index.d.ts" />
+//  <reference path="../../typings/index.d.ts" />
 declare var APPPOT_BUILD_UTC: number;
 declare var APPPOT_VERSION: Array<String>;
 import {Config} from './config';
@@ -33,7 +33,7 @@ export class AppPot {
   public DataType;
   public Error;
   public Gateway;
-
+  public LocalAuthenticator;
   constructor(props?){
     if(!props){
       return this._inst;
@@ -196,7 +196,7 @@ export class AppPot {
 
 let appPotInst = null;
 
-export function getService(props?){
+export function getService(props?): AppPot {
   if(props){
     if(appPotInst){
       throw 'AppPot is already configured';

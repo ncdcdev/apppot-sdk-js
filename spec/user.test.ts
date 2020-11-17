@@ -142,7 +142,8 @@ describe('User管理APIのテスト', function(){
         }else{
           throw 'failed';
         }
-      }).catch(function(){
+      }).catch(function(e){
+        console.log(e);
         throw 'failed';
       });
   });

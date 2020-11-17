@@ -4,7 +4,7 @@ import {Error} from './error';
 import {AppPot} from './apppot';
 import * as moment from 'moment';
 import {Database} from './database';
-import SqliteClauseTranslator from './sqlite-clause-translator.ts';
+import SqliteClauseTranslator from './sqlite-clause-translator';
 const objectAssign = require('object-assign');
 
 export namespace Model {

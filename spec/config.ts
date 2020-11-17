@@ -1,4 +1,5 @@
-import AppPotSDK from '../dist/apppot.js';
+// import AppPotSDK from '../';
+const AppPotSDK = require('../');
 
 export const AppPot = AppPotSDK.getService({
   url: 'http://trial-ec2a-01.apppot.net/apppot/',

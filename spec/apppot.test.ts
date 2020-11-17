@@ -12,4 +12,3 @@ describe('AppPotのテスト', function(){
     expect(AppPot.getVersion()).toMatch(/\d+\.\d+\.\d/);
   });
 });
-
