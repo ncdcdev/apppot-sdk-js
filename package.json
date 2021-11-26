@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/NCDCHub/apppot-sdk-js"
+    "url": "git://github.com/ncdcdev/apppot-sdk-js"
   },
   "author": "",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/NCDCHub/apppot-sdk-js/issues"
+    "url": "https://github.com/ncdcdev/apppot-sdk-js/issues"
   },
-  "homepage": "https://github.com/NCDCHub/apppot-sdk-js#readme",
+  "homepage": "https://github.com/ncdcdev/apppot-sdk-js#readme",
   "devDependencies": {
     "@babel/preset-env": "^7.12.1",
     "babel-jest": "^26.6.0",
