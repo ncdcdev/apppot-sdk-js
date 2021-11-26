@@ -3664,10 +3664,10 @@ var AppPot = /** @class */ (function () {
         return this._localDb;
     };
     AppPot.prototype.getBuildDate = function () {
-        return 1605593169 || 0;
+        return 1637924360 || 0;
     };
     AppPot.prototype.getVersion = function () {
-        return ["2","3","33"].join('.') || "unknown";
+        return ["2","3","34"].join('.') || "unknown";
     };
     AppPot.prototype.log = function (str, level) {
         var _this = this;
@@ -4189,8 +4189,9 @@ function getFileClass(appPot) {
             this._name = name;
             this._url = url;
         }
-        File.getUrl = function (filename) {
-            return appPot.getConfig().entryPoint + "files/" + filename + "?userToken=" + appPot.getAuthInfo().getToken();
+        File.getUrl = function (filename, asFilename) {
+            return appPot.getConfig().entryPoint + "files/" + filename + "?userToken=" + appPot.getAuthInfo().getToken()
+                + (asFilename ? "&asFilename=" + asFilename : '');
         };
         Object.defineProperty(File.prototype, "url", {
             get: function () {
