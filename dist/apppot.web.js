@@ -3664,10 +3664,10 @@ var AppPot = /** @class */ (function () {
         return this._localDb;
     };
     AppPot.prototype.getBuildDate = function () {
-        return 1637924360 || 0;
+        return 1637924491 || 0;
     };
     AppPot.prototype.getVersion = function () {
-        return ["2","3","34"].join('.') || "unknown";
+        return ["2","3","35"].join('.') || "unknown";
     };
     AppPot.prototype.log = function (str, level) {
         var _this = this;

@@ -1,6 +1,6 @@
 {
   "name": "apppot-sdk",
-  "version": "2.3.34",
+  "version": "2.3.35",
   "description": "",
   "main": "dist/apppot.node.js",
   "browser": "dist/apppot.web.js",
