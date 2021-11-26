@@ -11,7 +11,7 @@ export function getFileClass(appPot:AppPot){
     }
     static getUrl(filename: string, asFilename?: string){
       return `${appPot.getConfig().entryPoint}files/${filename}?userToken=${appPot.getAuthInfo().getToken()}`
-        + (asFilename ? `&asFilename=${asFilename}` : ``);
+        + (asFilename ? `&asFilename=${asFilename}` : '');
     }
     get url(){
       return `${appPot.getConfig().entryPoint}files/${this.name}?userToken=${appPot.getAuthInfo().getToken()}`;
