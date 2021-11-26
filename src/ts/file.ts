@@ -9,8 +9,9 @@ export function getFileClass(appPot:AppPot){
       this._name = name;
       this._url = url;
     }
-    static getUrl(filename){
-      return `${appPot.getConfig().entryPoint}files/${filename}?userToken=${appPot.getAuthInfo().getToken()}`;
+    static getUrl(filename: string, asFilename?: string){
+      return `${appPot.getConfig().entryPoint}files/${filename}?userToken=${appPot.getAuthInfo().getToken()}`
+        + (asFilename ? `&asFilename=${asFilename}` : '');
     }
     get url(){
       return `${appPot.getConfig().entryPoint}files/${this.name}?userToken=${appPot.getAuthInfo().getToken()}`;
